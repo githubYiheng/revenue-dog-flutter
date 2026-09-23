@@ -1,0 +1,20 @@
+name: revenue_dog_api_tester
+description: "revenue_dog 公开 API 编译期守门（D6，照 sdk/android/api-tester 纪律）：只编译、不运行。"
+publish_to: none
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+  flutter: ">=3.44.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  revenue_dog:
+    path: ../
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  # 公开符号清单（scripts/api_symbols.dart）用 analyzer 解析 package:revenue_dog/revenue_dog.dart 的导出命名空间。
+  # 只在本包，不进插件的依赖（宿主拿不到）。
+  # 钉主版本：element API 每个主版本都有破坏性改名（api_symbols.dart 按 13.x 写）；pubspec.lock 不入库。
+  analyzer: ^13.0.0

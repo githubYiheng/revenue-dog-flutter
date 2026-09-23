@@ -3,7 +3,8 @@
 与 RevenueCat `purchases_flutter`（10.13.1）**同形**的 Dart 薄层，直接桥接 RevenueDog iOS / Android 原生 SDK。
 Flutter 层不含任何支付逻辑：身份、缓存、上报、补报全在原生。设计：`docs/plan/flutter-sdk-design.md`（ADR 0100）。
 
-> 当前状态：**M1 已落地（Dart + 双端插件）；M2 Dart 侧已落地**（目录与购买的公开面、模型、通道契约 fixture），M2 原生插件随后按 `test/fixtures/` 实现；不要在宿主里接入。
+> 当前状态：**M1 / M2 已落地（Dart + 双端插件，32 项公开面齐）；M3 工程面已落地**（测试 app、`api_tester` 公开面基线、门禁 / 钉版本 / 发布脚本、真机清单草案）。
+> 首个 tag 之前还差真机清单 F 系列（`docs/audit/2026-09-24-flutter-device-checklist.md`）；**在此之前不要在宿主里接入**。
 
 ## 安装
 
@@ -106,13 +107,81 @@ RC 的原写法全部有效（`code == '1'`、`details['userCancelled']`、`deta
 | `PurchaseParams` | `.package` / `.storeProduct` / `.subscriptionOption` + 升降级、个性化价格、促销 / win-back、email 参数 | 只有 `PurchaseParams.package(package)`；`purchasePackage` 不带 RC 的升降级命名参数（D5） | §1 #21–22 |
 | 未提供 | 付费墙、Web、广告、优惠签名、旧购买 API、订阅者属性等 | 不做（设计 §2「不建」） | ADR 0100 |
 
-## 开发
+## 开发 / 门禁 / 发布
+
+工具链：`fvm spawn 3.44.4 <子命令>`（本机没有全局 `flutter`；**不要**写成 `fvm spawn 3.44.4 flutter …`，pitfalls P44），`dart` = `~/fvm/versions/3.44.4/bin/dart`。
+
+### 目录
+
+| 路径 | 是什么 |
+|---|---|
+| `lib/` · `test/` | Dart 包与单测（fixture 三方对账，`test/fixtures/README.md`） |
+| `ios/revenue_dog` · `ios/RevenueDogBridge` | iOS 插件（只 SPM）与纯映射包（可 `swift test`） |
+| `android/` | Android 插件（Java）；Bridge JUnit 经 `example/android` 的 Gradle 跑 |
+| `example/` | 测试 app（真机清单 F 系列的操作台，见下） |
+| `api_tester/` | 公开 API 编译期守门 + 公开符号基线 `api-baseline/public-api.txt` |
+| `scripts/gen_error_codes.dart` | 由 `sdk/error-codes.json` 生成 `lib/src/generated/error_codes.dart` |
+
+### 日常
 
 ```bash
-fvm spawn 3.44.4 test            # 单测（含 fixture 对账、码表一致性、版本一致性）
-fvm spawn 3.44.4 analyze
-~/fvm/versions/3.44.4/bin/dart run scripts/gen_error_codes.dart          # 改 sdk/error-codes.json 后重新生成
-~/fvm/versions/3.44.4/bin/dart run scripts/gen_error_codes.dart --check  # 只比对
+fvm spawn 3.44.4 analyze                  # 包 + example + api_tester 一起分析
+fvm spawn 3.44.4 test                     # Dart 单测（含 fixture 对账、码表、版本一致）
+~/fvm/versions/3.44.4/bin/dart run scripts/gen_error_codes.dart [--check]    # 改 sdk/error-codes.json 后重新生成 / 只比对
+(cd ios/RevenueDogBridge && swift test)   # iOS Bridge 三方对账
+(cd example/android && ./gradlew :revenue_dog:testDebugUnitTest)   # Android Bridge JUnit（先在 example 里 pub get）
 ```
 
-通道契约 fixture 与三方对账规则见 `test/fixtures/README.md`。
+### 测试 app（`example/`）
+
+单页 Material 手测台：顶部状态（`isConfigured` / `appUserID` / `isAnonymous` / active entitlements / activeSubscriptions）、
+每个公开方法一个按钮、档位列表点即购买、R3 同参 / 异参再 configure、F9 后台引擎（Android）、F15 不适用选项开关，
+监听器回调与原生日志（`setLogHandler`）都进底部日志面板，错误统一显示 `code / readableErrorCode / revdogCode / userCancelled / underlyingErrorMessage`。
+
+```bash
+example/run.sh android [--release] [-d <id>]   # key：~/selah-keys/revdog-example-android-staging-pk.txt（staging 项目 revdog-example）
+example/run.sh ios [--release] [-d <id>]       # key：~/selah-keys/revdog-staging-demo-pk.txt（staging 项目 demo），App Store 沙盒
+example/run.sh ios-xcode                       # 只生成带 key 的 Xcode 配置，然后 Xcode 里 Run：走本地 RevenueDog.storekit
+example/run.sh android --build --release       # 只构建不运行（--build 对 ios 同样可用）
+```
+
+- key 只经 `--dart-define-from-file` 的 0600 临时文件注入（`REVDOG_API_KEY_IOS` / `REVDOG_API_KEY_ANDROID` / `REVDOG_BASE_URL`，缺省 staging），脚本退出即删；**仓库里没有任何 key**。
+- Android：applicationId `org.revdog.example`（复用 Play 上原生 example 的测试商品与 license tester），versionCode = `example/pubspec.yaml` 的 build number（100 起），release 用 debug 签名、开 R8 + 资源压缩；
+  debug 构建额外信任用户 CA（抓包 / 注入 5xx 用），release 不信任。
+- iOS：bundle id `ai.loomalabs.revenuedog.example`（同 `sdk/ios/Example`），部署目标 16；`ios/RevenueDog.storekit` 是 `sdk/ios/Tests/StoreKitTestSupport/RevenueDog.storekit` 的副本（门禁 ⑦ 校验一致），
+  挂在 Runner scheme 的 StoreKit Configuration 上 —— 只在「Xcode 里点 Run」时生效，`flutter run` 不走它。本地交易绝不打线上（cutover-gate C1）。
+
+### 门禁（`scripts/sdk-flutter-check.sh`，仓库根跑）
+
+| # | 门禁 |
+|---|---|
+| ① | `gen_error_codes.dart --check` |
+| ② | 插件版本：`pubspec.yaml` `version` == `lib/src/version.dart` == CHANGELOG 最新已发布条目 |
+| ③ | 原生钉版本（D12）：两个 `Package.swift` 的 `exact:`、`android/build.gradle.kts` 的 `org.revdog:purchases:<v>` 与 `scripts/sdk-flutter-pin.lock` 一致，三份 `Package.resolved` 已解析到同一 iOS 版本 |
+| ④ | 包 `analyze` + `test` |
+| ⑤ | `api_tester` analyze（编译期守门）+ 公开符号清单 `--check` |
+| ⑥ | iOS Bridge `swift test` |
+| ⑦ | example：pub get → versionCode ≥ 100 → StoreKit 副本一致 → widget test → Android Bridge JUnit → `build apk --release` → `build ios --simulator --debug`（P45 顺序） |
+
+`SKIP_BUILDS=1` 跳过 ⑦ 的两次整包构建（**跳过 ≠ 通过**）。D11 的「最低 + stable 双跑」：fvm stable 目前 3.41.4 < 下限，只跑 3.44.4；stable ≥ 3.44 后设 `EXTRA_FLUTTER_VERSIONS=stable`。
+
+**公开 API 改动**：`api_tester/lib/api_tester.dart` 把每个公开符号按各种形态调一遍（显式类型、枚举穷尽 switch）；公开面变了先改它，再
+`cd api_tester && ~/fvm/versions/3.44.4/bin/dart scripts/api_symbols.dart` 重新生成基线并 review 差异 —— 基线里删 / 改一行 = 主版本，只增 = 次版本。
+
+### 改原生版本
+
+```bash
+scripts/sdk-flutter-pin.sh <ios-version> <android-version>   # 改写两个 Package.swift + build.gradle.kts + lock，Bridge resolve，跑门禁 ③
+```
+
+之后在 example 里跑一次 `build ios`（重写 example 的两份 `Package.resolved`）、CHANGELOG 记一笔、完整跑门禁。插件自身版本（`pubspec.yaml` + `lib/src/version.dart` + CHANGELOG）手动改，门禁 ② 校验。
+
+### 发布（D10，git tag）
+
+```bash
+scripts/sdk-flutter-release.sh <version>            # dry-run：门禁（含完整 sdk-flutter-check）、subtree split、push --dry-run
+scripts/sdk-flutter-release.sh <version> --apply    # 推镜像 githubYiheng/revenue-dog-flutter 的 main + 打 v<version>
+```
+
+发版前：CHANGELOG `[Unreleased]` 改成 `[<version>]`，pubspec / version.dart 同值，全部提交（工作区必须干净），真机清单 F 系列至少首轮跑过。
+机制同 `scripts/sdk-release.sh`（iOS）/ `sdk-android-release.sh`：monorepo 是唯一开发源，镜像只读，tag 不可移动。

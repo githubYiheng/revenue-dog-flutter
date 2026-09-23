@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:revenue_dog/revenue_dog.dart';
 import 'package:revenue_dog/src/purchases_state.dart';
+import 'package:revenue_dog/src/version.dart';
 
 import 'helpers.dart';
 
@@ -37,7 +38,7 @@ void main() {
         'logLevel': logLevel,
         'waitsForLogInBeforeSync': waitsForLogInBeforeSync,
         'baseUrl': baseUrl,
-        'platformFlavorVersion': '0.1.0',
+        'platformFlavorVersion': revenueDogFlutterVersion,
         'purchasesAreCompletedBy': purchasesAreCompletedBy,
         'shouldShowInAppMessagesAutomatically': shouldShowInAppMessagesAutomatically,
         'pendingTransactionsForPrepaidPlansEnabled': pendingTransactionsForPrepaidPlansEnabled,

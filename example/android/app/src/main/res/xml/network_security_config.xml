@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  测试 app 专用（真机清单 F6 / F12）：**只在 debuggable 构建**额外信任用户安装的 CA，
+  让 Proxyman / Charles 能抓包、把 POST /v1/receipts 改成 503 注入 901。
+  debug-overrides 对 release（不可调试）构建无效，release 仍只信任系统 CA。
+-->
+<network-security-config>
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

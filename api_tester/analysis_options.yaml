@@ -1,0 +1,16 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    # api_tester 的全部意义是「调用 / 引用每个公开符号」，结果不用是常态；弃用 API（purchasePackage、
+    # ExtendedPackage 等）必须照样引用，弃用提示不算失败。
+    unused_local_variable: ignore
+    deprecated_member_use: ignore
+    deprecated_member_use_from_same_package: ignore
+    dead_code: ignore
+
+linter:
+  rules:
+    avoid_print: false
+    # typedef 的签名要靠「显式类型的变量 = 闭包」钉住（LogHandler / CustomerInfoUpdateListener）。
+    prefer_function_declarations_over_variables: false

@@ -1,0 +1,6 @@
+.dart_tool/
+.flutter-plugins-dependencies
+/build/
+# 编译期守门包，不锁依赖（与插件本体一致）。
+/pubspec.lock
+*.iml
