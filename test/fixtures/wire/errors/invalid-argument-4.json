@@ -1,0 +1,13 @@
+{
+  "code": "4",
+  "message": "One or more of the arguments provided are invalid.",
+  "details": {
+    "code": 4,
+    "message": "One or more of the arguments provided are invalid.",
+    "readableErrorCode": "PurchaseInvalidError",
+    "readable_error_code": "PurchaseInvalidError",
+    "revdogCode": "purchaseInvalidError",
+    "underlyingErrorMessage": "no current Activity",
+    "userCancelled": false
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "premium_monthly": {
+    "status": "eligible",
+    "description": "Eligible for trial or introductory price."
+  },
+  "premium_annual": {
+    "status": "no_intro_offer_exists",
+    "description": "Product does not have trial or introductory price."
+  },
+  "unknown_product": {
+    "status": "unknown",
+    "description": "Status indeterminate."
+  }
+}

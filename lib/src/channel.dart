@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 /// 双向复用：Dart → 原生 `invokeMethod`，原生 → Dart 反向 `invokeMethod`（事件）。不用 Pigeon。
 const MethodChannel revenueDogMethodChannel = MethodChannel('revenue_dog');
 
-/// Dart → 原生方法名（设计 §5 方法表；M1 用到的部分）。名字即契约，原生插件逐字匹配。
+/// Dart → 原生方法名（设计 §5 方法表，M1 + M2 共 17 个）。名字即契约，原生插件逐字匹配。
 abstract final class ChannelMethods {
   static const setupPurchases = 'setupPurchases';
   static const getConfiguredParams = 'getConfiguredParams';
@@ -21,6 +21,22 @@ abstract final class ChannelMethods {
   static const getCustomerInfo = 'getCustomerInfo';
   static const enableAdServicesAttributionTokenCollection =
       'enableAdServicesAttributionTokenCollection';
+
+  // M2：目录与购买（设计 §5 方法表、§3）。
+  /// 无参 → Offerings map（§5.3）。
+  static const getOfferings = 'getOfferings';
+
+  /// `{offeringIdentifier, packageIdentifier}` → PurchaseResult map（§5.5）。
+  static const purchasePackage = 'purchasePackage';
+
+  /// 无参 → CustomerInfo map。
+  static const restorePurchases = 'restorePurchases';
+
+  /// 无参 → CustomerInfo map（Dart 丢弃返回值）。
+  static const syncPurchases = 'syncPurchases';
+
+  /// `{productIdentifiers: List<String>}` → `{productId: {status, description}}`（§5.5）。
+  static const checkTrialOrIntroductoryPriceEligibility = 'checkTrialOrIntroductoryPriceEligibility';
 }
 
 /// 原生 → Dart 事件名（设计 §5.7）。对照 RC：事件名逐字沿用。

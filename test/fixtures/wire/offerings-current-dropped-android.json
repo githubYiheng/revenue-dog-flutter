@@ -1,0 +1,452 @@
+{
+  "all": {
+    "default": {
+      "identifier": "default",
+      "serverDescription": "The default offering",
+      "availablePackages": [
+        {
+          "identifier": "$rc_monthly",
+          "packageType": "monthly",
+          "offeringIdentifier": "default",
+          "storeProduct": {
+            "identifier": "premium_monthly:monthly-base",
+            "title": "Premium Monthly (RevenueDog Example)",
+            "description": "Unlock all premium features, billed monthly",
+            "priceAmountMicros": 9990000,
+            "priceString": "$9.99",
+            "currencyCode": "USD",
+            "subscriptionPeriod": "P1M",
+            "productCategory": "subscription",
+            "introductoryPrice": {
+              "priceAmountMicros": 0,
+              "priceString": "Free",
+              "period": "P1W",
+              "periodUnit": "week",
+              "periodNumberOfUnits": 1,
+              "cycles": 1
+            },
+            "defaultOption": {
+              "id": "monthly-base:trial7",
+              "storeProductId": "premium_monthly:monthly-base",
+              "productId": "premium_monthly",
+              "pricingPhases": [
+                {
+                  "billingPeriod": {
+                    "unit": "week",
+                    "value": 1,
+                    "iso8601": "P1W"
+                  },
+                  "recurrenceMode": "finite_recurring",
+                  "billingCycleCount": 1,
+                  "price": {
+                    "formatted": "Free",
+                    "amountMicros": 0,
+                    "currencyCode": "USD"
+                  },
+                  "offerPaymentMode": "free_trial"
+                },
+                {
+                  "billingPeriod": {
+                    "unit": "month",
+                    "value": 1,
+                    "iso8601": "P1M"
+                  },
+                  "recurrenceMode": "infinite_recurring",
+                  "billingCycleCount": null,
+                  "price": {
+                    "formatted": "$9.99",
+                    "amountMicros": 9990000,
+                    "currencyCode": "USD"
+                  },
+                  "offerPaymentMode": null
+                }
+              ],
+              "tags": [
+                "trial"
+              ],
+              "isBasePlan": false,
+              "billingPeriod": {
+                "unit": "month",
+                "value": 1,
+                "iso8601": "P1M"
+              },
+              "isPrepaid": false,
+              "fullPricePhase": {
+                "billingPeriod": {
+                  "unit": "month",
+                  "value": 1,
+                  "iso8601": "P1M"
+                },
+                "recurrenceMode": "infinite_recurring",
+                "billingCycleCount": null,
+                "price": {
+                  "formatted": "$9.99",
+                  "amountMicros": 9990000,
+                  "currencyCode": "USD"
+                },
+                "offerPaymentMode": null
+              },
+              "freePhase": {
+                "billingPeriod": {
+                  "unit": "week",
+                  "value": 1,
+                  "iso8601": "P1W"
+                },
+                "recurrenceMode": "finite_recurring",
+                "billingCycleCount": 1,
+                "price": {
+                  "formatted": "Free",
+                  "amountMicros": 0,
+                  "currencyCode": "USD"
+                },
+                "offerPaymentMode": "free_trial"
+              },
+              "introPhase": null,
+              "presentedOfferingContext": {
+                "offeringIdentifier": "default",
+                "placementIdentifier": null,
+                "targetingContext": null
+              }
+            },
+            "subscriptionOptions": [
+              {
+                "id": "monthly-base",
+                "storeProductId": "premium_monthly:monthly-base",
+                "productId": "premium_monthly",
+                "pricingPhases": [
+                  {
+                    "billingPeriod": {
+                      "unit": "month",
+                      "value": 1,
+                      "iso8601": "P1M"
+                    },
+                    "recurrenceMode": "infinite_recurring",
+                    "billingCycleCount": null,
+                    "price": {
+                      "formatted": "$9.99",
+                      "amountMicros": 9990000,
+                      "currencyCode": "USD"
+                    },
+                    "offerPaymentMode": null
+                  }
+                ],
+                "tags": [],
+                "isBasePlan": true,
+                "billingPeriod": {
+                  "unit": "month",
+                  "value": 1,
+                  "iso8601": "P1M"
+                },
+                "isPrepaid": false,
+                "fullPricePhase": {
+                  "billingPeriod": {
+                    "unit": "month",
+                    "value": 1,
+                    "iso8601": "P1M"
+                  },
+                  "recurrenceMode": "infinite_recurring",
+                  "billingCycleCount": null,
+                  "price": {
+                    "formatted": "$9.99",
+                    "amountMicros": 9990000,
+                    "currencyCode": "USD"
+                  },
+                  "offerPaymentMode": null
+                },
+                "freePhase": null,
+                "introPhase": null,
+                "presentedOfferingContext": {
+                  "offeringIdentifier": "default",
+                  "placementIdentifier": null,
+                  "targetingContext": null
+                }
+              },
+              {
+                "id": "monthly-base:trial7",
+                "storeProductId": "premium_monthly:monthly-base",
+                "productId": "premium_monthly",
+                "pricingPhases": [
+                  {
+                    "billingPeriod": {
+                      "unit": "week",
+                      "value": 1,
+                      "iso8601": "P1W"
+                    },
+                    "recurrenceMode": "finite_recurring",
+                    "billingCycleCount": 1,
+                    "price": {
+                      "formatted": "Free",
+                      "amountMicros": 0,
+                      "currencyCode": "USD"
+                    },
+                    "offerPaymentMode": "free_trial"
+                  },
+                  {
+                    "billingPeriod": {
+                      "unit": "month",
+                      "value": 1,
+                      "iso8601": "P1M"
+                    },
+                    "recurrenceMode": "infinite_recurring",
+                    "billingCycleCount": null,
+                    "price": {
+                      "formatted": "$9.99",
+                      "amountMicros": 9990000,
+                      "currencyCode": "USD"
+                    },
+                    "offerPaymentMode": null
+                  }
+                ],
+                "tags": [
+                  "trial"
+                ],
+                "isBasePlan": false,
+                "billingPeriod": {
+                  "unit": "month",
+                  "value": 1,
+                  "iso8601": "P1M"
+                },
+                "isPrepaid": false,
+                "fullPricePhase": {
+                  "billingPeriod": {
+                    "unit": "month",
+                    "value": 1,
+                    "iso8601": "P1M"
+                  },
+                  "recurrenceMode": "infinite_recurring",
+                  "billingCycleCount": null,
+                  "price": {
+                    "formatted": "$9.99",
+                    "amountMicros": 9990000,
+                    "currencyCode": "USD"
+                  },
+                  "offerPaymentMode": null
+                },
+                "freePhase": {
+                  "billingPeriod": {
+                    "unit": "week",
+                    "value": 1,
+                    "iso8601": "P1W"
+                  },
+                  "recurrenceMode": "finite_recurring",
+                  "billingCycleCount": 1,
+                  "price": {
+                    "formatted": "Free",
+                    "amountMicros": 0,
+                    "currencyCode": "USD"
+                  },
+                  "offerPaymentMode": "free_trial"
+                },
+                "introPhase": null,
+                "presentedOfferingContext": {
+                  "offeringIdentifier": "default",
+                  "placementIdentifier": null,
+                  "targetingContext": null
+                }
+              }
+            ],
+            "presentedOfferingContext": {
+              "offeringIdentifier": "default",
+              "placementIdentifier": null,
+              "targetingContext": null
+            }
+          },
+          "presentedOfferingContext": {
+            "offeringIdentifier": "default",
+            "placementIdentifier": null,
+            "targetingContext": null
+          }
+        },
+        {
+          "identifier": "$rc_annual",
+          "packageType": "annual",
+          "offeringIdentifier": "default",
+          "storeProduct": {
+            "identifier": "premium_annual:annual-base",
+            "title": "Premium Annual (RevenueDog Example)",
+            "description": "Unlock all premium features, billed yearly",
+            "priceAmountMicros": 59990000,
+            "priceString": "$59.99",
+            "currencyCode": "USD",
+            "subscriptionPeriod": "P1Y",
+            "productCategory": "subscription",
+            "introductoryPrice": null,
+            "defaultOption": {
+              "id": "annual-base",
+              "storeProductId": "premium_annual:annual-base",
+              "productId": "premium_annual",
+              "pricingPhases": [
+                {
+                  "billingPeriod": {
+                    "unit": "year",
+                    "value": 1,
+                    "iso8601": "P1Y"
+                  },
+                  "recurrenceMode": "infinite_recurring",
+                  "billingCycleCount": null,
+                  "price": {
+                    "formatted": "$59.99",
+                    "amountMicros": 59990000,
+                    "currencyCode": "USD"
+                  },
+                  "offerPaymentMode": null
+                }
+              ],
+              "tags": [],
+              "isBasePlan": true,
+              "billingPeriod": {
+                "unit": "year",
+                "value": 1,
+                "iso8601": "P1Y"
+              },
+              "isPrepaid": false,
+              "fullPricePhase": {
+                "billingPeriod": {
+                  "unit": "year",
+                  "value": 1,
+                  "iso8601": "P1Y"
+                },
+                "recurrenceMode": "infinite_recurring",
+                "billingCycleCount": null,
+                "price": {
+                  "formatted": "$59.99",
+                  "amountMicros": 59990000,
+                  "currencyCode": "USD"
+                },
+                "offerPaymentMode": null
+              },
+              "freePhase": null,
+              "introPhase": null,
+              "presentedOfferingContext": {
+                "offeringIdentifier": "default",
+                "placementIdentifier": null,
+                "targetingContext": null
+              }
+            },
+            "subscriptionOptions": [
+              {
+                "id": "annual-base",
+                "storeProductId": "premium_annual:annual-base",
+                "productId": "premium_annual",
+                "pricingPhases": [
+                  {
+                    "billingPeriod": {
+                      "unit": "year",
+                      "value": 1,
+                      "iso8601": "P1Y"
+                    },
+                    "recurrenceMode": "infinite_recurring",
+                    "billingCycleCount": null,
+                    "price": {
+                      "formatted": "$59.99",
+                      "amountMicros": 59990000,
+                      "currencyCode": "USD"
+                    },
+                    "offerPaymentMode": null
+                  }
+                ],
+                "tags": [],
+                "isBasePlan": true,
+                "billingPeriod": {
+                  "unit": "year",
+                  "value": 1,
+                  "iso8601": "P1Y"
+                },
+                "isPrepaid": false,
+                "fullPricePhase": {
+                  "billingPeriod": {
+                    "unit": "year",
+                    "value": 1,
+                    "iso8601": "P1Y"
+                  },
+                  "recurrenceMode": "infinite_recurring",
+                  "billingCycleCount": null,
+                  "price": {
+                    "formatted": "$59.99",
+                    "amountMicros": 59990000,
+                    "currencyCode": "USD"
+                  },
+                  "offerPaymentMode": null
+                },
+                "freePhase": null,
+                "introPhase": null,
+                "presentedOfferingContext": {
+                  "offeringIdentifier": "default",
+                  "placementIdentifier": null,
+                  "targetingContext": null
+                }
+              }
+            ],
+            "presentedOfferingContext": {
+              "offeringIdentifier": "default",
+              "placementIdentifier": null,
+              "targetingContext": null
+            }
+          },
+          "presentedOfferingContext": {
+            "offeringIdentifier": "default",
+            "placementIdentifier": null,
+            "targetingContext": null
+          }
+        },
+        {
+          "identifier": "$rc_lifetime",
+          "packageType": "lifetime",
+          "offeringIdentifier": "default",
+          "storeProduct": {
+            "identifier": "lifetime_unlock",
+            "title": "Lifetime Unlock (RevenueDog Example)",
+            "description": "Unlock all premium features forever",
+            "priceAmountMicros": 19990000,
+            "priceString": "$19.99",
+            "currencyCode": "USD",
+            "subscriptionPeriod": null,
+            "productCategory": "non_subscription",
+            "introductoryPrice": null,
+            "defaultOption": null,
+            "subscriptionOptions": null,
+            "presentedOfferingContext": {
+              "offeringIdentifier": "default",
+              "placementIdentifier": null,
+              "targetingContext": null
+            }
+          },
+          "presentedOfferingContext": {
+            "offeringIdentifier": "default",
+            "placementIdentifier": null,
+            "targetingContext": null
+          }
+        },
+        {
+          "identifier": "custom_pack",
+          "packageType": "custom",
+          "offeringIdentifier": "default",
+          "storeProduct": {
+            "identifier": "coin_pack_100",
+            "title": "100 Coins (RevenueDog Example)",
+            "description": "100 coins",
+            "priceAmountMicros": 990000,
+            "priceString": "$0.99",
+            "currencyCode": "USD",
+            "subscriptionPeriod": null,
+            "productCategory": "non_subscription",
+            "introductoryPrice": null,
+            "defaultOption": null,
+            "subscriptionOptions": null,
+            "presentedOfferingContext": {
+              "offeringIdentifier": "default",
+              "placementIdentifier": null,
+              "targetingContext": null
+            }
+          },
+          "presentedOfferingContext": {
+            "offeringIdentifier": "default",
+            "placementIdentifier": null,
+            "targetingContext": null
+          }
+        }
+      ]
+    }
+  },
+  "current": null
+}

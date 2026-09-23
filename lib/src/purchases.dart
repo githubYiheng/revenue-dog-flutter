@@ -6,8 +6,13 @@ import 'errors.dart';
 import 'generated/error_codes.dart';
 import 'models/customer_info.dart';
 import 'models/entitlement_verification_mode.dart';
+import 'models/intro_eligibility.dart';
 import 'models/log_in_result.dart';
 import 'models/log_level.dart';
+import 'models/offerings.dart';
+import 'models/package.dart';
+import 'models/purchase_params.dart';
+import 'models/purchase_result.dart';
 import 'models/purchases_completed_by.dart';
 import 'models/purchases_configuration.dart';
 import 'models/store.dart';
@@ -21,7 +26,8 @@ import 'wire.dart';
 ///
 /// M1 提供：configure / setLogLevel / isConfigured / logIn / logOut / appUserID / isAnonymous /
 /// getCustomerInfo / enableAdServicesAttributionTokenCollection / add·removeCustomerInfoUpdateListener /
-/// setLogHandler。M2 追加 offerings / purchase / restore / sync / eligibility。
+/// setLogHandler。M2 追加 getOfferings / purchase / purchasePackage（弃用）/ restorePurchases / syncPurchases /
+/// checkTrialOrIntroductoryPriceEligibility。
 ///
 /// 全部方法先做平台守卫（D13）：Web 或 iOS / Android 以外的平台抛 [UnsupportedPlatformException]
 /// （`removeCustomerInfoUpdateListener` 是纯 Dart 集合操作，不守卫）。
@@ -237,6 +243,64 @@ class Purchases {
     CustomerInfoUpdateListener listenerToRemove,
   ) =>
       PurchasesState.customerInfoUpdateListeners.remove(listenerToRemove);
+
+  // ---------------------------------------------------------------------------
+  // 目录与购买（M2，设计 §1 #12–#24、§3）
+  // ---------------------------------------------------------------------------
+
+  /// 取当前用户的 offerings（原生缓存优先）。
+  ///
+  /// 原生插件已剔除查不到商店商品的 package、剔空的 offering（`current` 被剔掉时为 null）；
+  /// 原生 offerings 非空但**全部** package 查不到商品 → 抛码 2 `storeProblemError`（设计 §5.3，裁定 5）。
+  static Future<Offerings> getOfferings() async =>
+      decodeOfferings(WireMap.fromChannel(await _invoke(ChannelMethods.getOfferings)));
+
+  /// 购买。v1 只支持 `PurchaseParams.package(package)`。
+  ///
+  /// 通道参数 `{offeringIdentifier, packageIdentifier}`：插件按 id 重取原生 Package（B1，精确匹配 B2），
+  /// 定位失败码 5、参数缺失 / Android 无当前 Activity 码 4。
+  /// 错误（D3，映射在原生插件，Dart 透传）：用户取消 → 码 1 且 `details['userCancelled'] == true`；
+  /// 付款待批准 → 码 20；已扣款待服务端确认 → 码 901；服务端拒绝 → 码 902。
+  static Future<PurchaseResult> purchase(PurchaseParams purchaseParams) async {
+    _ensureSupportedPlatform();
+    final package = purchaseParams.package;
+    if (package == null) {
+      // 只有 `.package` 构造，不可达；防御将来新增构造时漏接。
+      throw ArgumentError('PurchaseParams.package must be set.');
+    }
+    final result = await _invoke(ChannelMethods.purchasePackage, {
+      'offeringIdentifier': package.presentedOfferingContext.offeringIdentifier,
+      'packageIdentifier': package.identifier,
+    });
+    return decodePurchaseResult(WireMap.fromChannel(result));
+  }
+
+  /// 购买一个 package。对照 RC：同名 `@Deprecated` 保留（D5）；RC 的升降级命名参数不提供。
+  @Deprecated('Use purchase(PurchaseParams.package(package))')
+  static Future<PurchaseResult> purchasePackage(Package packageToPurchase) =>
+      purchase(PurchaseParams.package(packageToPurchase));
+
+  /// 恢复购买，返回恢复后的 [CustomerInfo]。
+  static Future<CustomerInfo> restorePurchases() async =>
+      decodeCustomerInfo(WireMap.fromChannel(await _invoke(ChannelMethods.restorePurchases)));
+
+  /// 把本机商店交易同步到后端。两端都等原生回调完成（偏离 RC Android 的立即返回）；原生返回的 CustomerInfo 丢弃。
+  static Future<void> syncPurchases() async {
+    await _invoke(ChannelMethods.syncPurchases);
+  }
+
+  /// 查询试用 / 优惠价资格。
+  ///
+  /// iOS 由 offerings 里商品的介绍性优惠派生（偏离 RC iOS 直查 StoreKit）；Android 恒 unknown（同 RC）。
+  /// 每个请求的商品都有结果（不在 offerings 里 → unknown）；缺结果 → 码 12。
+  static Future<Map<String, IntroEligibility>> checkTrialOrIntroductoryPriceEligibility(
+    List<String> productIdentifiers,
+  ) async {
+    final result = await _invoke(ChannelMethods.checkTrialOrIntroductoryPriceEligibility, {
+      'productIdentifiers': productIdentifiers,
+    });
+    return decodeIntroEligibilityMap(WireMap.fromChannel(result), productIdentifiers);
+  }
 
   // ---------------------------------------------------------------------------
   // 归因

@@ -1,0 +1,13 @@
+{
+  "code": "5",
+  "message": "The product is not available for purchase.",
+  "details": {
+    "code": 5,
+    "message": "The product is not available for purchase.",
+    "readableErrorCode": "ProductNotAvailableForPurchaseError",
+    "readable_error_code": "ProductNotAvailableForPurchaseError",
+    "revdogCode": "productNotAvailableForPurchaseError",
+    "underlyingErrorMessage": "package $rc_weekly not found in offering default",
+    "userCancelled": false
+  }
+}

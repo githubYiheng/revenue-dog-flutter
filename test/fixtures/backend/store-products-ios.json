@@ -1,0 +1,60 @@
+{
+  "products": [
+    {
+      "productIdentifier": "premium_monthly",
+      "localizedTitle": "Premium Monthly",
+      "localizedDescription": "Unlock all premium features, billed monthly",
+      "price": "9.99",
+      "currencyCode": "USD",
+      "localizedPriceString": "$9.99",
+      "subscriptionPeriod": {
+        "unit": "month",
+        "value": 1
+      },
+      "introductoryOffer": {
+        "type": "free_trial",
+        "period": {
+          "unit": "week",
+          "value": 1
+        },
+        "periodCount": 1,
+        "price": "0",
+        "displayPrice": "$0.00",
+        "isEligible": true
+      }
+    },
+    {
+      "productIdentifier": "premium_annual",
+      "localizedTitle": "Premium Annual",
+      "localizedDescription": "Unlock all premium features, billed yearly",
+      "price": "59.99",
+      "currencyCode": "USD",
+      "localizedPriceString": "$59.99",
+      "subscriptionPeriod": {
+        "unit": "year",
+        "value": 1
+      },
+      "introductoryOffer": null
+    },
+    {
+      "productIdentifier": "lifetime_unlock",
+      "localizedTitle": "Lifetime Unlock",
+      "localizedDescription": "Unlock all premium features forever",
+      "price": "19.99",
+      "currencyCode": "USD",
+      "localizedPriceString": "$19.99",
+      "subscriptionPeriod": null,
+      "introductoryOffer": null
+    },
+    {
+      "productIdentifier": "coin_pack_100",
+      "localizedTitle": "100 Coins",
+      "localizedDescription": "100 coins",
+      "price": "0.99",
+      "currencyCode": "USD",
+      "localizedPriceString": "$0.99",
+      "subscriptionPeriod": null,
+      "introductoryOffer": null
+    }
+  ]
+}

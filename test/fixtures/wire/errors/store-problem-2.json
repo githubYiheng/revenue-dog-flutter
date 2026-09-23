@@ -1,0 +1,12 @@
+{
+  "code": "2",
+  "message": "There was a problem with the store.",
+  "details": {
+    "code": 2,
+    "message": "There was a problem with the store.",
+    "readableErrorCode": "StoreProblemError",
+    "readable_error_code": "StoreProblemError",
+    "revdogCode": "storeProblemError",
+    "underlyingErrorMessage": "store products unavailable"
+  }
+}

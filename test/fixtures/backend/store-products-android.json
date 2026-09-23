@@ -1,0 +1,119 @@
+{
+  "products": [
+    {
+      "productId": "premium_monthly",
+      "basePlanId": "monthly-base",
+      "type": "SUBS",
+      "priceAmountMicros": 9990000,
+      "priceCurrencyCode": "USD",
+      "formattedPrice": "$9.99",
+      "name": "Premium Monthly",
+      "title": "Premium Monthly (RevenueDog Example)",
+      "description": "Unlock all premium features, billed monthly",
+      "period": "P1M",
+      "subscriptionOptions": [
+        {
+          "productId": "premium_monthly",
+          "basePlanId": "monthly-base",
+          "offerId": null,
+          "pricingPhases": [
+            {
+              "billingPeriod": "P1M",
+              "recurrenceMode": "INFINITE_RECURRING",
+              "billingCycleCount": null,
+              "priceAmountMicros": 9990000,
+              "priceCurrencyCode": "USD",
+              "formattedPrice": "$9.99"
+            }
+          ],
+          "tags": [],
+          "offerToken": "test-offer-token-monthly-base"
+        },
+        {
+          "productId": "premium_monthly",
+          "basePlanId": "monthly-base",
+          "offerId": "trial7",
+          "pricingPhases": [
+            {
+              "billingPeriod": "P1W",
+              "recurrenceMode": "FINITE_RECURRING",
+              "billingCycleCount": 1,
+              "priceAmountMicros": 0,
+              "priceCurrencyCode": "USD",
+              "formattedPrice": "Free"
+            },
+            {
+              "billingPeriod": "P1M",
+              "recurrenceMode": "INFINITE_RECURRING",
+              "billingCycleCount": null,
+              "priceAmountMicros": 9990000,
+              "priceCurrencyCode": "USD",
+              "formattedPrice": "$9.99"
+            }
+          ],
+          "tags": [
+            "trial"
+          ],
+          "offerToken": "test-offer-token-monthly-base-trial7"
+        }
+      ]
+    },
+    {
+      "productId": "premium_annual",
+      "basePlanId": "annual-base",
+      "type": "SUBS",
+      "priceAmountMicros": 59990000,
+      "priceCurrencyCode": "USD",
+      "formattedPrice": "$59.99",
+      "name": "Premium Annual",
+      "title": "Premium Annual (RevenueDog Example)",
+      "description": "Unlock all premium features, billed yearly",
+      "period": "P1Y",
+      "subscriptionOptions": [
+        {
+          "productId": "premium_annual",
+          "basePlanId": "annual-base",
+          "offerId": null,
+          "pricingPhases": [
+            {
+              "billingPeriod": "P1Y",
+              "recurrenceMode": "INFINITE_RECURRING",
+              "billingCycleCount": null,
+              "priceAmountMicros": 59990000,
+              "priceCurrencyCode": "USD",
+              "formattedPrice": "$59.99"
+            }
+          ],
+          "tags": [],
+          "offerToken": "test-offer-token-annual-base"
+        }
+      ]
+    },
+    {
+      "productId": "lifetime_unlock",
+      "basePlanId": null,
+      "type": "INAPP",
+      "priceAmountMicros": 19990000,
+      "priceCurrencyCode": "USD",
+      "formattedPrice": "$19.99",
+      "name": "Lifetime Unlock",
+      "title": "Lifetime Unlock (RevenueDog Example)",
+      "description": "Unlock all premium features forever",
+      "period": null,
+      "subscriptionOptions": null
+    },
+    {
+      "productId": "coin_pack_100",
+      "basePlanId": null,
+      "type": "INAPP",
+      "priceAmountMicros": 990000,
+      "priceCurrencyCode": "USD",
+      "formattedPrice": "$0.99",
+      "name": "100 Coins",
+      "title": "100 Coins (RevenueDog Example)",
+      "description": "100 coins",
+      "period": null,
+      "subscriptionOptions": null
+    }
+  ]
+}

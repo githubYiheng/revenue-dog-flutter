@@ -1,0 +1,40 @@
+{
+  "current_offering_id": "default",
+  "offerings": [
+    {
+      "identifier": "default",
+      "description": "The default offering",
+      "packages": [
+        {
+          "identifier": "$rc_monthly",
+          "platform_product_identifier": "premium_monthly",
+          "platform_product_plan_identifier": "monthly-base"
+        },
+        {
+          "identifier": "$rc_annual",
+          "platform_product_identifier": "premium_annual",
+          "platform_product_plan_identifier": "annual-base"
+        },
+        {
+          "identifier": "$rc_lifetime",
+          "platform_product_identifier": "lifetime_unlock"
+        },
+        {
+          "identifier": "custom_pack",
+          "platform_product_identifier": "coin_pack_100"
+        }
+      ]
+    },
+    {
+      "identifier": "retention_offer",
+      "description": "Retention discount offering",
+      "packages": [
+        {
+          "identifier": "$rc_monthly",
+          "platform_product_identifier": "premium_monthly_discount",
+          "platform_product_plan_identifier": "monthly-discount"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "premium_monthly": {
+    "status": "unknown",
+    "description": "Status indeterminate."
+  },
+  "premium_annual": {
+    "status": "unknown",
+    "description": "Status indeterminate."
+  },
+  "unknown_product": {
+    "status": "unknown",
+    "description": "Status indeterminate."
+  }
+}

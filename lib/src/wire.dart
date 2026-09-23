@@ -156,4 +156,37 @@ class WireMap {
   /// 非空枚举键：查 [table]，未知值 → [unknown]；缺失 / null / 非字符串 → 码 12。
   T requireEnum<T>(String key, Map<String, T> table, T unknown) =>
       table[requireString(key)] ?? unknown;
+
+  // ---------------------------------------------------------------------------
+  // M2 增补（目录 / 购买模型用）
+  // ---------------------------------------------------------------------------
+
+  /// 键必须在（值可为 null）：`Offerings.current` 这类「键恒在」的可空键（设计 §5.3）。
+  void requirePresent(String key) {
+    if (!map.containsKey(key)) throwWireError(keyPath(key), 'missing key');
+  }
+
+  /// 可空整数键：null / 缺失 → null；类型错 → 码 12。
+  int? optionalInt(String key) {
+    final value = map[key];
+    return value == null ? null : _typed<int>(key, value);
+  }
+
+  /// 可空 map 键：null / 缺失 → null；类型错 → 码 12。
+  WireMap? optionalMap(String key) {
+    final value = map[key];
+    return value == null ? null : WireMap(_typed<Map<String, dynamic>>(key, value), keyPath(key));
+  }
+
+  /// 可空 `List<map>` 键：null / 缺失 → null；否则同 [requireMapList]。
+  List<WireMap>? optionalMapList(String key) => map[key] == null ? null : requireMapList(key);
+
+  /// 可空枚举键：null / 缺失 → null；未知值 → [unknown]（可为 null，照 RC 的「未知即 null」档）。
+  T? optionalEnum<T>(String key, Map<String, T> table, T? unknown) {
+    final value = optionalString(key);
+    return value == null ? null : (table[value] ?? unknown);
+  }
 }
+
+/// 金额 micros（int64）→ RC 的 `double` 价格（设计 §5 总则：通道不发 double，Dart 派生 `micros / 10⁶`）。
+double priceFromMicros(int micros) => micros / 1000000;

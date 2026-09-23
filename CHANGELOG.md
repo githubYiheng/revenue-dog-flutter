@@ -22,3 +22,18 @@ M1（Dart 侧）：包骨架与身份面。原生插件（iOS Swift / Android Ja
 - `UnsupportedPlatformException`：iOS / Android 以外的平台调用任何方法时抛出。
 - R3：同一进程重复 `configure` 同参 → 复用并重挂订阅（warn）；异参 → 码 23。R4：`configure` 前的 `setLogLevel` 随配置下发。
 - 通道契约 fixture：`test/fixtures/backend/`（后端响应形状）+ `test/fixtures/wire/`（原生插件必须产出的通道 map），三方对账规则见 `test/fixtures/README.md`。
+
+M2（Dart 侧）：目录与购买。原生插件的 M2 通道方法随后按 fixture 实现。
+
+### 新增
+
+- `Purchases.getOfferings`、`purchase(PurchaseParams)`、`purchasePackage(Package)`（`@Deprecated`，薄包装，D5）、`restorePurchases`、
+  `syncPurchases`（等原生完成，返回值丢弃）、`checkTrialOrIntroductoryPriceEligibility`；通道方法 `getOfferings` / `purchasePackage {offeringIdentifier, packageIdentifier}` /
+  `restorePurchases` / `syncPurchases` / `checkTrialOrIntroductoryPriceEligibility {productIdentifiers}`。
+- 模型（RC 10.13.1 字段全量、equatable）：`Offerings`、`Offering`（便捷档位由 `availablePackages` 派生，`metadata` 恒 `{}`）、`Package` / `PackageType`、
+  `PresentedOfferingContext` / `PresentedOfferingTargetingContext`、`StoreProduct`（19 字段，`price` = micros / 10⁶）、`IntroductoryPrice`、`PeriodUnit`、`ProductCategory`、
+  `SubscriptionOption` / `PricingPhase` / `Price` / `Period` / `RecurrenceMode` / `OfferPaymentMode` / `InstallmentsInfo`、`StoreProductDiscount`（只声明）、
+  `PurchaseParams`（只有 `.package`）、`PurchaseResult`、`IntroEligibility` / `IntroEligibilityStatus`；RC 的弃用扩展 `ExtendedPackage` / `ExtendedStoreProduct` / `ExtendedSubscriptionOption` 与 `OfferingX` / `PackageListX`。
+- 通道契约 fixture：`backend/offerings*.json`、`backend/store-products-{ios,android}.json`、`wire/offerings*-{ios,android}.json`、`wire/purchase-result.json`、
+  `wire/intro-eligibility-{ios,android}.json`、`wire/errors/{store-problem-2,product-not-found-5,invalid-argument-4}.json`；剔除规则与两端差异见 `test/fixtures/README.md`。
+- 解码校验（码 12）：`Offerings.current` 键恒在且与 `all` 中同名项一致；`Package.offeringIdentifier` 与其 `presentedOfferingContext` 一致；eligibility 结果覆盖全部请求的商品。
