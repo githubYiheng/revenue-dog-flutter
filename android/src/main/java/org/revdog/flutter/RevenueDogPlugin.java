@@ -9,6 +9,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.revdog.flutter.bridge.BridgeErrorException;
 import org.revdog.flutter.bridge.DiagnosticsSink;
 import org.revdog.flutter.bridge.ErrorEnvelope;
 import org.revdog.flutter.bridge.ErrorMapper;
@@ -17,18 +18,27 @@ import org.revdog.flutter.bridge.WireContractException;
 import org.revdog.purchases.LogHandler;
 import org.revdog.purchases.LogInCallback;
 import org.revdog.purchases.LogLevel;
+import org.revdog.purchases.PurchaseCallback;
+import org.revdog.purchases.PurchaseParams;
+import org.revdog.purchases.PurchaseResult;
 import org.revdog.purchases.Purchases;
 import org.revdog.purchases.PurchasesAreCompletedBy;
 import org.revdog.purchases.PurchasesConfiguration;
 import org.revdog.purchases.PurchasesError;
 import org.revdog.purchases.PurchasesErrorCode;
 import org.revdog.purchases.ReceiveCustomerInfoCallback;
+import org.revdog.purchases.ReceiveOfferingsCallback;
 import org.revdog.purchases.UncheckedPurchasesException;
 import org.revdog.purchases.customerinfo.CustomerInfo;
+import org.revdog.purchases.offerings.Offering;
+import org.revdog.purchases.offerings.Offerings;
+import org.revdog.purchases.offerings.Package;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -68,6 +78,9 @@ public class RevenueDogPlugin implements FlutterPlugin, MethodCallHandler, Activ
     static final String WARNING_OPTION_IGNORED = "hybrid_option_ignored";
     static final String WARNING_DUPLICATE_CONFIGURE = "hybrid_duplicate_configure";
 
+    /** 购买时无当前 Activity 的 underlyingErrorMessage（与 fixture {@code errors/invalid-argument-4.json} 逐字）。 */
+    static final String NO_ACTIVITY = "no current Activity";
+
     // -------------------------------------------------------------------------------------------
     // R3 进程级记录（设计 §4）：首次成功 setupPurchases 的 (apiKey, appUserID)。
     // 静态 = 进程级：热重启（Dart 静态态清零）与多引擎（每引擎一个插件实例）共享同一份，与原生单例同寿命。
@@ -102,7 +115,7 @@ public class RevenueDogPlugin implements FlutterPlugin, MethodCallHandler, Activ
     @Nullable private Handler mainHandler;
     /** 本引擎的 CustomerInfo 订阅（D14）；只在主线程读写。 */
     @Nullable private Closeable customerInfoSubscription;
-    /** 当前 Activity（M2 购买用）；只在主线程读写。 */
+    /** 当前 Activity（M2 购买用，B6）；只在主线程读写。 */
     @Nullable private Activity activity;
 
     // -------------------------------------------------------------------------------------------
@@ -175,8 +188,12 @@ public class RevenueDogPlugin implements FlutterPlugin, MethodCallHandler, Activ
                 break;
             default:
                 if (isKnownMethod(method) && !Purchases.isConfigured()) {
-                    replyError(result, ErrorMapper.synthetic(
-                            PurchasesErrorCode.ConfigurationError, ErrorMapper.NOT_CONFIGURED_UNDERLYING));
+                    // 购买路径的全部错误都带 userCancelled（fixture README「错误信封」），守卫的 23 也不例外。
+                    replyError(result, "purchasePackage".equals(method)
+                            ? ErrorMapper.syntheticPurchase(
+                                    PurchasesErrorCode.ConfigurationError, ErrorMapper.NOT_CONFIGURED_UNDERLYING)
+                            : ErrorMapper.synthetic(
+                                    PurchasesErrorCode.ConfigurationError, ErrorMapper.NOT_CONFIGURED_UNDERLYING));
                     return;
                 }
         }
@@ -219,8 +236,22 @@ public class RevenueDogPlugin implements FlutterPlugin, MethodCallHandler, Activ
                     // iOS only；Android 静默成功（宿主不判平台就调，08 §8.3 #15；对照 RC Android 同为空实现）。
                     result.success(null);
                     break;
+                case "getOfferings":
+                    getOfferings(result);
+                    break;
+                case "purchasePackage":
+                    purchasePackage(call, result);
+                    break;
+                case "restorePurchases":
+                    restorePurchases(result);
+                    break;
+                case "syncPurchases":
+                    syncPurchases(result);
+                    break;
+                case "checkTrialOrIntroductoryPriceEligibility":
+                    checkTrialOrIntroductoryPriceEligibility(call, result);
+                    break;
                 default:
-                    // M2 的方法（getOfferings / purchasePackage / restore / sync / eligibility）尚未实现。
                     result.notImplemented();
             }
         } catch (UncheckedPurchasesException e) {
@@ -239,6 +270,11 @@ public class RevenueDogPlugin implements FlutterPlugin, MethodCallHandler, Activ
             case "logOut":
             case "getCustomerInfo":
             case "enableAdServicesAttributionTokenCollection":
+            case "getOfferings":
+            case "purchasePackage":
+            case "restorePurchases":
+            case "syncPurchases":
+            case "checkTrialOrIntroductoryPriceEligibility":
                 return true;
             default:
                 return false;
@@ -478,6 +514,176 @@ public class RevenueDogPlugin implements FlutterPlugin, MethodCallHandler, Activ
     }
 
     // -------------------------------------------------------------------------------------------
+    // 目录与购买（M2，设计 §3 / §5.3–5.5）
+    // -------------------------------------------------------------------------------------------
+
+    private void getOfferings(Result result) {
+        Purchases.getSharedInstance().getOfferings(new ReceiveOfferingsCallback() {
+            @Override
+            public void onReceived(@NonNull Offerings offerings) {
+                mapInBackground(
+                        () -> mapOfferings(offerings),
+                        result::success,
+                        envelope -> replyError(result, envelope));
+            }
+
+            @Override
+            public void onError(@NonNull PurchasesError error) {
+                replyError(result, ErrorMapper.fromPurchasesError(error));
+            }
+        });
+    }
+
+    /** Bridge 剔除 + 后台指定的 current 被剔 / 不存在时打 warn（裁定 5；Bridge 不碰 Log）。 */
+    private static Map<String, Object> mapOfferings(Offerings offerings) {
+        Map<String, Object> map = Mappers.offerings(offerings, NATIVE_DIAGNOSTICS);
+        String currentId = offerings.getCurrentOfferingIdentifier();
+        if (currentId != null && map.get("current") == null) {
+            Log.w(TAG, "current offering " + currentId + " has no purchasable packages; current is null");
+        }
+        return map;
+    }
+
+    /**
+     * 购买（设计 §3）：① 参数 → 码 4；② 无当前 Activity → 码 4；③ 定位（B1 每次按 id 重取原生对象、B2 精确匹配）：
+     * 先原生内存缓存 {@code getCachedOfferings()}，为 null 再 {@code getOfferings}；找不到 / 无商品 → 码 5；
+     * ④ 原生 {@code purchase}；⑤ 归一（D3 / B5）。全部错误信封带 {@code userCancelled}。
+     *
+     * 对照 RC：purchases-hybrid-common {@code purchasePackage} 同样按 (offeringIdentifier, packageIdentifier) 从
+     * offerings 重取 Package，定位失败自造 ProductNotAvailable；偏离：精确匹配（RC Android 忽略大小写，B2）。
+     */
+    private void purchasePackage(MethodCall call, Result result) {
+        String offeringId;
+        String packageId;
+        try {
+            offeringId = requireString(call, "offeringIdentifier", PurchasesErrorCode.PurchaseInvalidError);
+            packageId = requireString(call, "packageIdentifier", PurchasesErrorCode.PurchaseInvalidError);
+        } catch (InvalidArgumentException e) {
+            replyError(result, ErrorMapper.syntheticPurchase(e.code, e.getMessage()));
+            return;
+        }
+        if (activity == null) {
+            replyError(result, ErrorMapper.syntheticPurchase(PurchasesErrorCode.PurchaseInvalidError, NO_ACTIVITY));
+            return;
+        }
+        try {
+            Purchases purchases = Purchases.getSharedInstance();
+            Offerings cached = purchases.getCachedOfferings();
+            if (cached != null) {
+                purchaseFromOfferings(cached, offeringId, packageId, result);
+                return;
+            }
+            purchases.getOfferings(new ReceiveOfferingsCallback() {
+                @Override
+                public void onReceived(@NonNull Offerings offerings) {
+                    purchaseFromOfferings(offerings, offeringId, packageId, result);
+                }
+
+                @Override
+                public void onError(@NonNull PurchasesError error) {
+                    replyError(result, ErrorMapper.fromPurchaseCallbackError(error, false));
+                }
+            });
+        } catch (UncheckedPurchasesException e) {
+            replyError(result, ErrorMapper.fromPurchaseCallbackError(e.getError(), false));
+        }
+    }
+
+    /** 在（原生、未剔除的）offerings 里精确定位 package 并发起购买。主线程调用。 */
+    private void purchaseFromOfferings(Offerings offerings, String offeringId, String packageId, Result result) {
+        Offering offering = offerings.getAll().get(offeringId);
+        Package pkg = offering == null ? null : offering.get(packageId);
+        if (pkg == null || pkg.getProduct() == null) {
+            replyError(result, ErrorMapper.syntheticPurchase(PurchasesErrorCode.ProductNotAvailableForPurchaseError,
+                    "package " + packageId + " not found in offering " + offeringId));
+            return;
+        }
+        // 等 offerings 期间 Activity 可能已 detach（配置变更 / 退后台），发起前再取一次。
+        Activity current = activity;
+        if (current == null) {
+            replyError(result, ErrorMapper.syntheticPurchase(PurchasesErrorCode.PurchaseInvalidError, NO_ACTIVITY));
+            return;
+        }
+        try {
+            Purchases.getSharedInstance().purchase(
+                    new PurchaseParams.Builder(current, pkg).build(),
+                    new PurchaseCallback() {
+                        @Override
+                        public void onCompleted(@NonNull PurchaseResult purchaseResult) {
+                            mapInBackground(
+                                    () -> Mappers.purchaseResult(purchaseResult.getCustomerInfo(),
+                                            purchaseResult.getStoreTransaction(), purchaseResult.isPending(),
+                                            NATIVE_DIAGNOSTICS),
+                                    result::success,
+                                    envelope -> replyError(result, envelope));
+                        }
+
+                        @Override
+                        public void onError(@NonNull PurchasesError error, boolean userCancelled) {
+                            if (ErrorMapper.isInconsistentCancellation(error, userCancelled)) {
+                                Log.e(TAG, "purchase error code " + error.getCode().getCode()
+                                        + " disagrees with userCancelled=" + userCancelled
+                                        + "; reporting code 1 with userCancelled=true (D3)");
+                            }
+                            replyError(result, ErrorMapper.fromPurchaseCallbackError(error, userCancelled));
+                        }
+                    });
+        } catch (UncheckedPurchasesException e) {
+            replyError(result, ErrorMapper.fromPurchaseCallbackError(e.getError(), false));
+        }
+    }
+
+    private void restorePurchases(Result result) {
+        Purchases.getSharedInstance().restorePurchases(new ReceiveCustomerInfoCallback() {
+            @Override
+            public void onReceived(@NonNull CustomerInfo customerInfo) {
+                replyCustomerInfo(result, customerInfo);
+            }
+
+            @Override
+            public void onError(@NonNull PurchasesError error) {
+                replyError(result, ErrorMapper.fromPurchasesError(error));
+            }
+        });
+    }
+
+    /** 同样回 CustomerInfo map（Dart 丢弃，签名照 RC 为 void），等原生回调再完成。 */
+    private void syncPurchases(Result result) {
+        Purchases.getSharedInstance().syncPurchases(new ReceiveCustomerInfoCallback() {
+            @Override
+            public void onReceived(@NonNull CustomerInfo customerInfo) {
+                replyCustomerInfo(result, customerInfo);
+            }
+
+            @Override
+            public void onError(@NonNull PurchasesError error) {
+                replyError(result, ErrorMapper.fromPurchasesError(error));
+            }
+        });
+    }
+
+    /** Android 恒 unknown，不调原生（§5.5，同 RC）。参数缺失 / 类型错 → 码 4（非购买路径，无 userCancelled）。 */
+    private void checkTrialOrIntroductoryPriceEligibility(MethodCall call, Result result) {
+        Object raw = call.argument("productIdentifiers");
+        if (raw == null) {
+            throw new InvalidArgumentException(PurchasesErrorCode.PurchaseInvalidError, "missing argument productIdentifiers");
+        }
+        if (!(raw instanceof List)) {
+            throw new InvalidArgumentException(PurchasesErrorCode.PurchaseInvalidError,
+                    "argument productIdentifiers must be a List<String>");
+        }
+        List<String> ids = new ArrayList<>();
+        for (Object item : (List<?>) raw) {
+            if (!(item instanceof String)) {
+                throw new InvalidArgumentException(PurchasesErrorCode.PurchaseInvalidError,
+                        "argument productIdentifiers must be a List<String>");
+            }
+            ids.add((String) item);
+        }
+        result.success(Mappers.introEligibility(ids));
+    }
+
+    // -------------------------------------------------------------------------------------------
     // 线程（设计 §6）
     // -------------------------------------------------------------------------------------------
 
@@ -499,6 +705,13 @@ public class RevenueDogPlugin implements FlutterPlugin, MethodCallHandler, Activ
             Map<String, Object> mapped;
             try {
                 mapped = mapping.map();
+            } catch (BridgeErrorException e) {
+                // Bridge 已给出完整信封（码 2 / 购买路径 0·12·20）；原生契约违规打 error 日志。
+                if (e.severe) {
+                    Log.e(TAG, "native result violates the wire contract: " + e.getMessage());
+                }
+                runOnMain(() -> onFailed.accept(e.envelope));
+                return;
             } catch (WireContractException e) {
                 Log.e(TAG, "native model violates the wire contract: " + e.getMessage());
                 ErrorEnvelope envelope = ErrorMapper.synthetic(

@@ -93,6 +93,39 @@ public final class ErrorMapper {
         return fromPurchasesError(new PurchasesError(code, underlyingErrorMessage));
     }
 
+    /**
+     * 购买路径（M2）的插件合成错误：带 {@code userCancelled}（码 1 为 true、其余 false，D3）。
+     * 用于 purchasePackage 的参数缺失 / 无 Activity（4）、定位失败（5）、待定（20）、无交易（0，B5）、交易 id 空（12，裁定 3）。
+     */
+    public static ErrorEnvelope syntheticPurchase(PurchasesErrorCode code, String underlyingErrorMessage) {
+        return fromPurchasesError(new PurchasesError(code, underlyingErrorMessage),
+                code.getCode() == PurchasesErrorCode.PurchaseCancelledError.getCode());
+    }
+
+    /**
+     * {@code PurchaseCallback.onError(error, userCancelled)} → 信封（D3 / B4）。
+     *
+     * 归一：{@code userCancelled == true} 或原生码为 1 → 一律发码 1 + {@code userCancelled: true}；
+     * 其余原样（含 901 / 902），{@code userCancelled: false}。原生取消时码应为 1，两者不一致由插件记 error 日志
+     * （{@link #isInconsistentCancellation}），这里只管产出信封；不一致时原生错误的说明进 {@code underlyingErrorMessage}。
+     * 对照 RC：hybrid-common {@code ErrorContainer} 同样以回调参数 userCancelled 为准；偏离：RC 不改写码，我方强制码 1（D3 两端归一）。
+     */
+    public static ErrorEnvelope fromPurchaseCallbackError(PurchasesError error, boolean userCancelled) {
+        if (isInconsistentCancellation(error, userCancelled)) {
+            String underlying = error.getUnderlyingErrorMessage() != null
+                    ? error.getUnderlyingErrorMessage() : error.getMessage();
+            return fromPurchasesError(new PurchasesError(PurchasesErrorCode.PurchaseCancelledError, underlying), true);
+        }
+        boolean cancelled = error.getCode().getCode() == PurchasesErrorCode.PurchaseCancelledError.getCode();
+        return fromPurchasesError(error, cancelled);
+    }
+
+    /** 原生 {@code userCancelled} 与码 1 不一致（任一方说取消、另一方不是）。 */
+    public static boolean isInconsistentCancellation(PurchasesError error, boolean userCancelled) {
+        boolean codeIsCancel = error.getCode().getCode() == PurchasesErrorCode.PurchaseCancelledError.getCode();
+        return userCancelled != codeIsCancel;
+    }
+
     private static ErrorEnvelope build(
             int number, String revdogCode, String readableOverride, PurchasesError error, Boolean userCancelled) {
         String nativeMessage = error.getMessage();

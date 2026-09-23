@@ -1,6 +1,7 @@
 package org.revdog.flutter.bridge;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 import org.revdog.purchases.PurchasesError;
@@ -58,6 +59,14 @@ public class ErrorMapperTest {
         cases.put("rejected-by-server-902.json", ErrorMapper.fromPurchasesError(
                 new PurchasesError(PurchasesErrorCode.PurchaseRejectedByServer,
                         "Bad parameters x", null, 400, "req_01JREJECTED00000001"), false));
+        // M2 插件合成：getOfferings 商品全缺（码 2，非购买路径无 userCancelled，裁定 5）。
+        cases.put("store-problem-2.json", ErrorMapper.synthetic(
+                PurchasesErrorCode.StoreProblemError, Mappers.STORE_PRODUCTS_UNAVAILABLE));
+        // M2 购买路径合成（B3）：定位失败码 5、无 Activity 码 4，均带 userCancelled:false。
+        cases.put("product-not-found-5.json", ErrorMapper.syntheticPurchase(
+                PurchasesErrorCode.ProductNotAvailableForPurchaseError, "package $rc_weekly not found in offering default"));
+        cases.put("invalid-argument-4.json", ErrorMapper.syntheticPurchase(
+                PurchasesErrorCode.PurchaseInvalidError, "no current Activity"));
         return cases;
     }
 
@@ -76,6 +85,47 @@ public class ErrorMapperTest {
             files.add(file.getName());
         }
         assertEquals(files, new TreeSet<>(cases().keySet()));
+    }
+
+    /** 购买回调取消（码 1 + userCancelled）→ purchase-cancelled-1.json；待定原生错误（20）→ payment-pending-20.json。 */
+    @Test
+    public void purchaseCallbackErrorsMatchFixtures() {
+        assertFixture("purchase-cancelled-1.json", ErrorMapper.fromPurchaseCallbackError(
+                new PurchasesError(PurchasesErrorCode.PurchaseCancelledError), true));
+        assertFixture("payment-pending-20.json", ErrorMapper.fromPurchaseCallbackError(
+                new PurchasesError(PurchasesErrorCode.PaymentPendingError), false));
+    }
+
+    /** 原生 userCancelled == true 但码不是 1 → 按 1 发（D3），原生说明进 underlyingErrorMessage。 */
+    @Test
+    public void userCancelledWithOtherCodeIsReportedAsCode1() {
+        PurchasesError error = new PurchasesError(PurchasesErrorCode.StoreProblemError, "billing flow closed");
+        assertTrue(ErrorMapper.isInconsistentCancellation(error, true));
+        ErrorEnvelope envelope = ErrorMapper.fromPurchaseCallbackError(error, true);
+        assertEquals("1", envelope.code);
+        assertEquals(Boolean.TRUE, envelope.details.get("userCancelled"));
+        assertEquals("PurchaseCancelledError", envelope.details.get("readableErrorCode"));
+        assertEquals("billing flow closed", envelope.details.get("underlyingErrorMessage"));
+    }
+
+    /** 购买路径非取消的原生错误（如 901）原样透传，userCancelled:false。 */
+    @Test
+    public void purchaseCallbackPassesThroughOtherCodes() {
+        PurchasesError error = new PurchasesError(PurchasesErrorCode.PurchasePendingServerConfirmation,
+                "HTTP 503", null, 503, "req_01JPENDING000000001");
+        assertFixture("pending-server-901.json", ErrorMapper.fromPurchaseCallbackError(error, false));
+    }
+
+    /** 参数缺失（购买路径）→ 码 4，underlying 为 {@code missing argument <name>}，其余键同 invalid-argument-4.json。 */
+    @Test
+    public void missingArgumentOnPurchasePath() {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> expected = (Map<String, Object>) Fixtures.parse(Fixtures.read("wire/errors/invalid-argument-4.json"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> details = (Map<String, Object>) expected.get("details");
+        details.put("underlyingErrorMessage", "missing argument packageIdentifier");
+        Fixtures.assertDeepEquals(expected, toMap(ErrorMapper.syntheticPurchase(
+                PurchasesErrorCode.PurchaseInvalidError, "missing argument packageIdentifier")));
     }
 
     /** logOut 路径以外的 14 照常映射（不串路径）。 */
