@@ -1,0 +1,15 @@
+{
+  "code": "902",
+  "message": "Bad parameters x",
+  "details": {
+    "code": 902,
+    "message": "Bad parameters x",
+    "readableErrorCode": "PurchaseRejectedByServer",
+    "readable_error_code": "PurchaseRejectedByServer",
+    "revdogCode": "purchaseRejectedByServer",
+    "underlyingErrorMessage": "Bad parameters x",
+    "userCancelled": false,
+    "httpStatusCode": 400,
+    "requestId": "req_01JREJECTED00000001"
+  }
+}

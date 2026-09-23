@@ -1,0 +1,15 @@
+{
+  "code": "901",
+  "message": "HTTP 503",
+  "details": {
+    "code": 901,
+    "message": "HTTP 503",
+    "readableErrorCode": "PurchasePendingServerConfirmation",
+    "readable_error_code": "PurchasePendingServerConfirmation",
+    "revdogCode": "purchasePendingServerConfirmation",
+    "underlyingErrorMessage": "HTTP 503",
+    "userCancelled": false,
+    "httpStatusCode": 503,
+    "requestId": "req_01JPENDING000000001"
+  }
+}

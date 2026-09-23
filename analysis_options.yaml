@@ -1,0 +1,14 @@
+include: package:flutter_lints/flutter.yaml
+
+# 对照 RC：取 RC analysis_options 中与本包相关的一组规则。
+linter:
+  rules:
+    avoid_relative_lib_imports: true
+    directives_ordering: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_final_in_for_each: true
+    prefer_final_locals: true
+    prefer_relative_imports: true
+    prefer_single_quotes: true
+    unnecessary_parenthesis: true

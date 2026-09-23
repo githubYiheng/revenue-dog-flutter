@@ -1,0 +1,23 @@
+{
+  "created": true,
+  "customerInfo": {
+    "entitlements": {
+      "all": {},
+      "active": {},
+      "verification": "not_requested"
+    },
+    "activeSubscriptions": [],
+    "allPurchasedProductIdentifiers": [],
+    "latestExpirationDate": null,
+    "firstSeen": 1790164680000,
+    "originalAppUserId": "$RDAnonymousID:0123456789abcdef0123456789abcdef",
+    "requestDate": 1790164800000,
+    "allExpirationDates": {},
+    "allPurchaseDates": {},
+    "originalApplicationVersion": null,
+    "originalPurchaseDate": null,
+    "managementURL": null,
+    "nonSubscriptionTransactions": [],
+    "subscriptionsByProductIdentifier": {}
+  }
+}

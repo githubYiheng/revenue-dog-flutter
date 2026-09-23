@@ -1,0 +1,13 @@
+{
+  "code": "1",
+  "message": "Purchase was cancelled.",
+  "details": {
+    "code": 1,
+    "message": "Purchase was cancelled.",
+    "readableErrorCode": "PurchaseCancelledError",
+    "readable_error_code": "PurchaseCancelledError",
+    "revdogCode": "purchaseCancelledError",
+    "underlyingErrorMessage": "",
+    "userCancelled": true
+  }
+}

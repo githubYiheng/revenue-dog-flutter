@@ -1,0 +1,14 @@
+{
+  "code": "12",
+  "message": "unexpected backend response",
+  "details": {
+    "code": 12,
+    "message": "unexpected backend response",
+    "readableErrorCode": "UnexpectedBackendResponseError",
+    "readable_error_code": "UnexpectedBackendResponseError",
+    "revdogCode": "unexpectedBackendResponseError",
+    "underlyingErrorMessage": "missing request_date in subscriber response",
+    "httpStatusCode": 200,
+    "requestId": "req_01JABCDEF0123456789"
+  }
+}

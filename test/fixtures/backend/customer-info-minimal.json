@@ -1,0 +1,16 @@
+{
+  "request_date": "2026-09-23T12:00:00Z",
+  "request_date_ms": 1790164800000,
+  "subscriber": {
+    "original_app_user_id": "$RDAnonymousID:0123456789abcdef0123456789abcdef",
+    "first_seen": "2026-09-23T11:58:00Z",
+    "last_seen": "2026-09-23T11:58:00Z",
+    "management_url": null,
+    "original_application_version": null,
+    "original_purchase_date": null,
+    "entitlements": {},
+    "subscriptions": {},
+    "non_subscriptions": {},
+    "other_purchases": {}
+  }
+}

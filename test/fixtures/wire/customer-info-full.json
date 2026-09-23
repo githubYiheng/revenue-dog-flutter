@@ -1,0 +1,176 @@
+{
+  "entitlements": {
+    "all": {
+      "legacy_pro": {
+        "identifier": "legacy_pro",
+        "isActive": false,
+        "willRenew": false,
+        "periodType": "normal",
+        "latestPurchaseDate": 1564617600000,
+        "originalPurchaseDate": 1533081600000,
+        "expirationDate": 1596240000000,
+        "store": "play_store",
+        "productIdentifier": "pro_annual",
+        "productPlanIdentifier": "annual-base",
+        "isSandbox": false,
+        "unsubscribeDetectedAt": 1593561600000,
+        "billingIssueDetectedAt": 1596067200000,
+        "ownershipType": "purchased",
+        "verification": "not_requested"
+      },
+      "lifetime": {
+        "identifier": "lifetime",
+        "isActive": true,
+        "willRenew": false,
+        "periodType": "normal",
+        "latestPurchaseDate": 1784107800000,
+        "originalPurchaseDate": 1784107800000,
+        "expirationDate": null,
+        "store": "app_store",
+        "productIdentifier": "lifetime_unlock",
+        "productPlanIdentifier": null,
+        "isSandbox": false,
+        "unsubscribeDetectedAt": null,
+        "billingIssueDetectedAt": null,
+        "ownershipType": "purchased",
+        "verification": "not_requested"
+      },
+      "premium": {
+        "identifier": "premium",
+        "isActive": true,
+        "willRenew": true,
+        "periodType": "normal",
+        "latestPurchaseDate": 1789905600000,
+        "originalPurchaseDate": 1781956800000,
+        "expirationDate": 4070908800000,
+        "store": "play_store",
+        "productIdentifier": "premium_monthly",
+        "productPlanIdentifier": "monthly-base",
+        "isSandbox": true,
+        "unsubscribeDetectedAt": null,
+        "billingIssueDetectedAt": null,
+        "ownershipType": "purchased",
+        "verification": "not_requested"
+      }
+    },
+    "active": {
+      "lifetime": {
+        "identifier": "lifetime",
+        "isActive": true,
+        "willRenew": false,
+        "periodType": "normal",
+        "latestPurchaseDate": 1784107800000,
+        "originalPurchaseDate": 1784107800000,
+        "expirationDate": null,
+        "store": "app_store",
+        "productIdentifier": "lifetime_unlock",
+        "productPlanIdentifier": null,
+        "isSandbox": false,
+        "unsubscribeDetectedAt": null,
+        "billingIssueDetectedAt": null,
+        "ownershipType": "purchased",
+        "verification": "not_requested"
+      },
+      "premium": {
+        "identifier": "premium",
+        "isActive": true,
+        "willRenew": true,
+        "periodType": "normal",
+        "latestPurchaseDate": 1789905600000,
+        "originalPurchaseDate": 1781956800000,
+        "expirationDate": 4070908800000,
+        "store": "play_store",
+        "productIdentifier": "premium_monthly",
+        "productPlanIdentifier": "monthly-base",
+        "isSandbox": true,
+        "unsubscribeDetectedAt": null,
+        "billingIssueDetectedAt": null,
+        "ownershipType": "purchased",
+        "verification": "not_requested"
+      }
+    },
+    "verification": "not_requested"
+  },
+  "activeSubscriptions": [
+    "premium_monthly"
+  ],
+  "allPurchasedProductIdentifiers": [
+    "coin_pack_100",
+    "lifetime_unlock",
+    "premium_monthly",
+    "pro_annual"
+  ],
+  "latestExpirationDate": 4070908800000,
+  "firstSeen": 1533081600000,
+  "originalAppUserId": "user_full_001",
+  "requestDate": 1790164800000,
+  "allExpirationDates": {
+    "premium_monthly": 4070908800000,
+    "pro_annual": 1596240000000
+  },
+  "allPurchaseDates": {
+    "coin_pack_100": 1788246000000,
+    "lifetime_unlock": 1784107800000,
+    "premium_monthly": 1789905600000,
+    "pro_annual": 1564617600000
+  },
+  "originalApplicationVersion": null,
+  "originalPurchaseDate": 1533081600000,
+  "managementURL": "https://play.google.com/store/account/subscriptions",
+  "nonSubscriptionTransactions": [
+    {
+      "transactionIdentifier": "ns_lifetime_001",
+      "productIdentifier": "lifetime_unlock",
+      "purchaseDate": 1784107800000
+    },
+    {
+      "transactionIdentifier": "ns_coins_001",
+      "productIdentifier": "coin_pack_100",
+      "purchaseDate": 1788246000000
+    }
+  ],
+  "subscriptionsByProductIdentifier": {
+    "premium_monthly": {
+      "productIdentifier": "premium_monthly",
+      "purchaseDate": 1789905600000,
+      "originalPurchaseDate": 1781956800000,
+      "expiresDate": 4070908800000,
+      "store": "play_store",
+      "unsubscribeDetectedAt": null,
+      "isSandbox": true,
+      "billingIssuesDetectedAt": null,
+      "gracePeriodExpiresDate": null,
+      "ownershipType": "purchased",
+      "periodType": "normal",
+      "refundedAt": null,
+      "storeTransactionId": "GPA.3301-1111-2222-33333..3",
+      "isActive": true,
+      "willRenew": true,
+      "autoResumeDate": null,
+      "displayName": "Premium Monthly",
+      "managementURL": "https://play.google.com/store/account/subscriptions",
+      "productPlanIdentifier": "monthly-base"
+    },
+    "pro_annual": {
+      "productIdentifier": "pro_annual",
+      "purchaseDate": 1564617600000,
+      "originalPurchaseDate": 1533081600000,
+      "expiresDate": 1596240000000,
+      "store": "play_store",
+      "unsubscribeDetectedAt": 1593561600000,
+      "isSandbox": false,
+      "billingIssuesDetectedAt": 1596067200000,
+      "gracePeriodExpiresDate": 1596499200000,
+      "ownershipType": "purchased",
+      "periodType": "normal",
+      "refundedAt": null,
+      "storeTransactionId": "GPA.3302-4444-5555-66666..1",
+      "isActive": false,
+      "willRenew": false,
+      "autoResumeDate": null,
+      "displayName": "Pro Annual",
+      "managementURL": "https://play.google.com/store/account/subscriptions",
+      "productPlanIdentifier": "annual-base"
+    }
+  }
+}

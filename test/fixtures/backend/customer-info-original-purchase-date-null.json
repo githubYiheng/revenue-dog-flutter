@@ -1,0 +1,48 @@
+{
+  "request_date": "2026-09-23T12:00:00Z",
+  "request_date_ms": 1790164800000,
+  "subscriber": {
+    "original_app_user_id": "user_opd_null_001",
+    "first_seen": "2018-08-01T00:00:00Z",
+    "last_seen": "2026-09-23T11:59:00Z",
+    "management_url": "https://play.google.com/store/account/subscriptions",
+    "original_application_version": null,
+    "original_purchase_date": null,
+    "entitlements": {
+      "premium": {
+        "expires_date": "2099-01-01T00:00:00Z",
+        "grace_period_expires_date": null,
+        "product_identifier": "premium_monthly",
+        "purchase_date": "2026-09-20T12:00:00Z",
+        "product_plan_identifier": "monthly-base"
+      }
+    },
+    "subscriptions": {
+      "premium_monthly": {
+        "auto_resume_date": null,
+        "billing_issues_detected_at": null,
+        "grace_period_expires_date": null,
+        "refunded_at": null,
+        "unsubscribe_detected_at": null,
+        "is_sandbox": true,
+        "ownership_type": "PURCHASED",
+        "period_type": "normal",
+        "management_url": "https://play.google.com/store/account/subscriptions",
+        "display_name": "Premium Monthly",
+        "price": {
+          "amount": 4.99,
+          "currency": "USD"
+        },
+        "metadata": null,
+        "expires_date": "2099-01-01T00:00:00Z",
+        "purchase_date": "2026-09-20T12:00:00Z",
+        "original_purchase_date": null,
+        "store": "play_store",
+        "store_transaction_id": "GPA.3301-1111-2222-33333..3",
+        "product_plan_identifier": "monthly-base"
+      }
+    },
+    "non_subscriptions": {},
+    "other_purchases": {}
+  }
+}

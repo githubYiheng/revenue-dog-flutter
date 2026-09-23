@@ -1,0 +1,30 @@
+name: revenue_dog
+description: "RevenueDog Flutter SDK：与 purchases_flutter 同形的 Dart 薄层，桥接 RevenueDog iOS / Android 原生 SDK。"
+# 插件版本的唯一来源；lib/src/version.dart 由它生成（脚本 M3 定稿，设计 §7 版本门禁）。
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+  flutter: ">=3.44.0"
+
+# 运行时依赖只允许 flutter + equatable（对照 RC：同款 equatable，保持模型值相等语义；设计 §1 规则）。
+dependencies:
+  flutter:
+    sdk: flutter
+  equatable: ^2.0.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  plugin:
+    # 只声明 android + ios（D13）；其它平台由 Dart 侧抛 UnsupportedPlatformException。
+    platforms:
+      android:
+        package: org.revdog.flutter
+        pluginClass: RevenueDogPlugin
+      ios:
+        pluginClass: RevenueDogPlugin

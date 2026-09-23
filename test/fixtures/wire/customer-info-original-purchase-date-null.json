@@ -1,0 +1,86 @@
+{
+  "entitlements": {
+    "all": {
+      "premium": {
+        "identifier": "premium",
+        "isActive": true,
+        "willRenew": true,
+        "periodType": "normal",
+        "latestPurchaseDate": 1789905600000,
+        "originalPurchaseDate": 1789905600000,
+        "expirationDate": 4070908800000,
+        "store": "play_store",
+        "productIdentifier": "premium_monthly",
+        "productPlanIdentifier": "monthly-base",
+        "isSandbox": true,
+        "unsubscribeDetectedAt": null,
+        "billingIssueDetectedAt": null,
+        "ownershipType": "purchased",
+        "verification": "not_requested"
+      }
+    },
+    "active": {
+      "premium": {
+        "identifier": "premium",
+        "isActive": true,
+        "willRenew": true,
+        "periodType": "normal",
+        "latestPurchaseDate": 1789905600000,
+        "originalPurchaseDate": 1789905600000,
+        "expirationDate": 4070908800000,
+        "store": "play_store",
+        "productIdentifier": "premium_monthly",
+        "productPlanIdentifier": "monthly-base",
+        "isSandbox": true,
+        "unsubscribeDetectedAt": null,
+        "billingIssueDetectedAt": null,
+        "ownershipType": "purchased",
+        "verification": "not_requested"
+      }
+    },
+    "verification": "not_requested"
+  },
+  "activeSubscriptions": [
+    "premium_monthly"
+  ],
+  "allPurchasedProductIdentifiers": [
+    "premium_monthly"
+  ],
+  "latestExpirationDate": 4070908800000,
+  "firstSeen": 1533081600000,
+  "originalAppUserId": "user_opd_null_001",
+  "requestDate": 1790164800000,
+  "allExpirationDates": {
+    "premium_monthly": 4070908800000
+  },
+  "allPurchaseDates": {
+    "premium_monthly": 1789905600000
+  },
+  "originalApplicationVersion": null,
+  "originalPurchaseDate": null,
+  "managementURL": "https://play.google.com/store/account/subscriptions",
+  "nonSubscriptionTransactions": [],
+  "subscriptionsByProductIdentifier": {
+    "premium_monthly": {
+      "productIdentifier": "premium_monthly",
+      "purchaseDate": 1789905600000,
+      "originalPurchaseDate": null,
+      "expiresDate": 4070908800000,
+      "store": "play_store",
+      "unsubscribeDetectedAt": null,
+      "isSandbox": true,
+      "billingIssuesDetectedAt": null,
+      "gracePeriodExpiresDate": null,
+      "ownershipType": "purchased",
+      "periodType": "normal",
+      "refundedAt": null,
+      "storeTransactionId": "GPA.3301-1111-2222-33333..3",
+      "isActive": true,
+      "willRenew": true,
+      "autoResumeDate": null,
+      "displayName": "Premium Monthly",
+      "managementURL": "https://play.google.com/store/account/subscriptions",
+      "productPlanIdentifier": "monthly-base"
+    }
+  }
+}

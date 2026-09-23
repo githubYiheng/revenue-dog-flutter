@@ -1,0 +1,12 @@
+{
+  "code": "23",
+  "message": "There is an issue with your configuration. Check the underlying error for more details.",
+  "details": {
+    "code": 23,
+    "message": "There is an issue with your configuration. Check the underlying error for more details.",
+    "readableErrorCode": "ConfigurationError",
+    "readable_error_code": "ConfigurationError",
+    "revdogCode": "configurationError",
+    "underlyingErrorMessage": "Purchases has not been configured; call Purchases.configure first"
+  }
+}

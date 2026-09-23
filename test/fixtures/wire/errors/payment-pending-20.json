@@ -1,0 +1,13 @@
+{
+  "code": "20",
+  "message": "The payment is pending.",
+  "details": {
+    "code": 20,
+    "message": "The payment is pending.",
+    "readableErrorCode": "PaymentPendingError",
+    "readable_error_code": "PaymentPendingError",
+    "revdogCode": "paymentPendingError",
+    "underlyingErrorMessage": "",
+    "userCancelled": false
+  }
+}
