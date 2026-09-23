@@ -1,0 +1,15 @@
+{
+  "originHash" : "ec3f6e73be9d79c2e961843c37f9dce92fdc9dd18b6c0329850b871333e1832e",
+  "pins" : [
+    {
+      "identity" : "revenue-dog-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/githubYiheng/revenue-dog-ios",
+      "state" : {
+        "revision" : "e90876433547ea83d15862666cc495256f1f0bea",
+        "version" : "0.4.1"
+      }
+    }
+  ],
+  "version" : 3
+}

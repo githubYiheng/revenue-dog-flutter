@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  revenue_dog Flutter 插件（iOS）隐私清单。
+  本插件只做通道转发，自身不采集数据、不跟踪、不访问 required-reason API。
+  购买 / 身份 / 诊断等数据处理全部在原生 RevenueDog SDK 内，其隐私清单随 RevenueDog 包分发（Package.swift `.copy("PrivacyInfo.xcprivacy")`），本清单不重复声明。
+-->
 <plist version="1.0">
 <dict>
+	<key>NSPrivacyTracking</key>
+	<false/>
 	<key>NSPrivacyTrackingDomains</key>
-	<array/>
-	<key>NSPrivacyAccessedAPITypes</key>
 	<array/>
 	<key>NSPrivacyCollectedDataTypes</key>
 	<array/>
-	<key>NSPrivacyTracking</key>
-	<false/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array/>
 </dict>
 </plist>

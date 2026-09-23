@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "revenue-dog-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/githubYiheng/revenue-dog-ios",
+      "state" : {
+        "revision" : "e90876433547ea83d15862666cc495256f1f0bea",
+        "version" : "0.4.1"
+      }
+    }
+  ],
+  "version" : 2
+}
