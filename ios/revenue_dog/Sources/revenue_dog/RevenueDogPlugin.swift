@@ -1,6 +1,7 @@
 //
 //  RevenueDogPlugin.swift
-//  RevenueDog Flutter 插件（iOS）：通道分派、未配置守卫、R3 进程级记录、每引擎一条 CustomerInfo 订阅（D14）。
+//  RevenueDog Flutter 插件（iOS）：通道分派、未配置守卫、R3 进程级记录、每引擎一条 CustomerInfo 订阅（D14）；
+//  M2 目录与购买（getOfferings / purchasePackage / restore / sync / 试用资格，设计 §3、§5.3–§5.5）。
 //
 //  设计依据：docs/plan/flutter-sdk-design.md §2 / §4 / §5 / §6。纯映射全部在 RevenueDogBridge（可 swift test）。
 //  线程（§6）：Flutter 在主线程调 handle → 本类 @MainActor；CustomerInfo 映射放 Task.detached；
@@ -37,11 +38,17 @@ public final class RevenueDogPlugin: NSObject {
     static let unguardedMethods: Set<String> = [
         "setupPurchases", "getConfiguredParams", "isConfigured", "setLogLevel", "setLogHandler",
     ]
-    /// 需要已配置的 M1 方法。
+    /// 需要已配置的方法（M1 + M2）。
     static let guardedMethods: Set<String> = [
         "attachCustomerInfoStream", "getAppUserID", "isAnonymous", "logIn", "logOut", "getCustomerInfo",
         "enableAdServicesAttributionTokenCollection",
+        // M2：目录与购买（设计 §1 #12–#24、§3）。
+        "getOfferings", "purchasePackage", "restorePurchases", "syncPurchases",
+        "checkTrialOrIntroductoryPriceEligibility",
     ]
+
+    /// 购买路径的方法：同步阶段抛出的错误（参数缺失等）也按购买路径装信封（带 userCancelled: false，D3）。
+    static let purchasePathMethods: Set<String> = ["purchasePackage"]
 
     static let logger = Logger(subsystem: "org.revdog.flutter", category: "plugin")
 
@@ -56,6 +63,9 @@ public final class RevenueDogPlugin: NSObject {
 
     /// 已记过的字段回退（`<originalAppUserId>|<wireKey>`），同一用户同一字段每进程只记一次诊断。
     private static var recordedFallbacks: Set<String> = []
+
+    /// 已记过的目录剔除诊断（`<code>|<detail>`），同一 detail 每进程只记一次（getOfferings 会被反复调用）。
+    private static var recordedCatalogDiagnostics: Set<String> = []
 
     // MARK: 引擎级状态
 
@@ -128,11 +138,21 @@ extension RevenueDogPlugin: @preconcurrency FlutterPlugin {
             case "enableAdServicesAttributionTokenCollection":
                 Purchases.shared.attribution.enableAdServicesAttributionTokenCollection()
                 result(nil)
+            case "getOfferings":
+                getOfferings(result: result)
+            case "purchasePackage":
+                try purchasePackage(arguments, result: result)
+            case "restorePurchases":
+                restorePurchases(result: result)
+            case "syncPurchases":
+                syncPurchases(result: result)
+            case "checkTrialOrIntroductoryPriceEligibility":
+                try checkTrialOrIntroductoryPriceEligibility(arguments, result: result)
             default:
                 result(FlutterMethodNotImplemented)
             }
         } catch {
-            reply(result, error: error, path: .general)
+            reply(result, error: error, path: Self.purchasePathMethods.contains(method) ? .purchase : .general)
         }
     }
 }
@@ -345,6 +365,123 @@ extension RevenueDogPlugin {
     }
 }
 
+// MARK: - 目录与购买（M2，设计 §3 / §5.3–§5.5）
+
+extension RevenueDogPlugin {
+
+    /// 原生 `offerings()`（自带内存缓存）→ 剔除 + 映射（Task.detached）→ 回 map；记剔除诊断（进程内去重）。
+    /// 全部缺商品 → 码 2（非购买路径，无 userCancelled，裁定 5）。
+    /// 对照 RC：hybrid-common `getOfferings` 直通原生 + `Offerings+HybridAdditions` 映射；剔除规则见 OfferingsMapper。
+    private func getOfferings(result: @escaping FlutterResult) {
+        let purchases = Purchases.shared
+        Task { @MainActor in
+            do {
+                let offerings = try await purchases.offerings()
+                let box = try await Task.detached(priority: .userInitiated) {
+                    let mapped = try OfferingsMapper.map(offerings)
+                    return CatalogBox(value: WireCodec.channelValue(mapped.map),
+                                      diagnostics: mapped.diagnostics,
+                                      missingCurrentOfferingIdentifier: mapped.missingCurrentOfferingIdentifier)
+                }.value
+                if let missing = box.missingCurrentOfferingIdentifier {
+                    Self.logger.warning("current offering \(missing, privacy: .public) has no purchasable package; Offerings.current is null")
+                }
+                self.recordCatalogDiagnostics(box.diagnostics)
+                result(box.value)
+            } catch {
+                self.reply(result, error: error, path: .general)
+            }
+        }
+    }
+
+    /// `{offeringIdentifier, packageIdentifier}` → 按 id 重取原生 Package（B1 / B2）→ `purchase(package:)` → 归一（D3 / B5）。
+    /// 全部错误走购买路径信封（`details.userCancelled` 恒在）；901 / 902 等原生错误原样透传（B4）。
+    /// 对照 RC：hybrid-common `purchasePackage(_:presentedOfferingContext:…)` 按字符串 id 重取；
+    /// 偏离：id 精确匹配（B2）、待定抛 20、无交易信息码 0、交易字段为空码 12。
+    private func purchasePackage(_ arguments: Arguments, result: @escaping FlutterResult) throws {
+        let offeringIdentifier = try arguments.requireString("offeringIdentifier", code: .purchaseInvalidError)
+        let packageIdentifier = try arguments.requireString("packageIdentifier", code: .purchaseInvalidError)
+        let purchases = Purchases.shared
+        Task { @MainActor in
+            do {
+                let offerings = try await purchases.offerings()
+                let package = try PackageLocator.locate(in: offerings,
+                                                        offeringIdentifier: offeringIdentifier,
+                                                        packageIdentifier: packageIdentifier)
+                let purchaseResult = try await purchases.purchase(package: package)
+                let box = try await Task.detached(priority: .userInitiated) {
+                    let mapped = try PurchaseResultMapper.map(purchaseResult, now: Date())
+                    return WireBox(value: WireCodec.channelValue(mapped.map), fallbacks: mapped.fallbacks)
+                }.value
+                self.recordFallbacks(box.fallbacks, for: purchaseResult.customerInfo)
+                result(box.value)
+            } catch {
+                self.reply(result, error: error, path: .purchase)
+            }
+        }
+    }
+
+    /// 直通，等原生完成再回 CustomerInfo map（同 RC iOS）。
+    private func restorePurchases(result: @escaping FlutterResult) {
+        let purchases = Purchases.shared
+        Task { @MainActor in
+            do {
+                let customerInfo = try await purchases.restorePurchases()
+                result(try await self.mapCustomerInfo(customerInfo))
+            } catch {
+                self.reply(result, error: error, path: .general)
+            }
+        }
+    }
+
+    /// 直通并等原生完成（偏离 RC Android 的立即返回，§1 #24）；回 CustomerInfo map，Dart 丢弃。
+    private func syncPurchases(result: @escaping FlutterResult) {
+        let purchases = Purchases.shared
+        Task { @MainActor in
+            do {
+                let customerInfo = try await purchases.syncPurchases()
+                result(try await self.mapCustomerInfo(customerInfo))
+            } catch {
+                self.reply(result, error: error, path: .general)
+            }
+        }
+    }
+
+    /// `{productIdentifiers: [String]}` → 由原生 offerings 里商品的 `introductoryOffer` 派生（§1 #19，ADR 0100 第 2 条）。
+    /// 参数缺失 / 类型错 → 码 4（非购买路径）；offerings 拉取失败 → 原生错误原样。
+    private func checkTrialOrIntroductoryPriceEligibility(_ arguments: Arguments,
+                                                          result: @escaping FlutterResult) throws {
+        let productIdentifiers = try arguments.requireStringList("productIdentifiers", code: .purchaseInvalidError)
+        let purchases = Purchases.shared
+        Task { @MainActor in
+            do {
+                let offerings = try await purchases.offerings()
+                let map = IntroEligibilityMapper.map(productIdentifiers: productIdentifiers, offerings: offerings)
+                result(WireCodec.channelValue(map))
+            } catch {
+                self.reply(result, error: error, path: .general)
+            }
+        }
+    }
+
+    /// 裁定 5 / 10：剔除的 package / offering → `recordDiagnosticsWarning`；同一 `<code>|<detail>` 每进程只记一次。
+    private func recordCatalogDiagnostics(_ diagnostics: [BridgeDiagnostic]) {
+        let fresh = diagnostics.filter {
+            Self.recordedCatalogDiagnostics.insert("\($0.code)|\($0.detail)").inserted
+        }
+        guard !fresh.isEmpty, Purchases.isConfigured else { return }
+        for diagnostic in fresh {
+            Self.logger.warning("\(diagnostic.code, privacy: .public): \(diagnostic.detail, privacy: .public)")
+        }
+        let purchases = Purchases.shared
+        Task { @MainActor in
+            for diagnostic in fresh {
+                await purchases.recordDiagnosticsWarning(diagnostic.code, detail: diagnostic.detail)
+            }
+        }
+    }
+}
+
 // MARK: - 订阅（D14）
 
 extension RevenueDogPlugin {
@@ -385,11 +522,14 @@ extension RevenueDogPlugin {
 
 extension RevenueDogPlugin {
 
-    /// 错误 → `FlutterError`（§5.6 信封）；码 12 另打 error 日志（§5 总则）。
+    /// 错误 → `FlutterError`（§5.6 信封）；码 12 另打 error 日志（§5 总则）；
+    /// 码 0 同样打 error 日志（B5：购买成功却无交易信息 = 原生契约违规；其它未知错误也值得留痕）。
     private func reply(_ result: FlutterResult, error: any Error, path: ErrorPath = .general) {
         let envelope = ErrorEnvelope.make(from: error, path: path)
         if envelope.code == "12" {
             Self.logger.error("unexpected backend response: \(String(describing: error), privacy: .public)")
+        } else if envelope.code == "0" {
+            Self.logger.error("unknown error: \(String(describing: error), privacy: .public)")
         }
         result(FlutterError(code: envelope.code,
                             message: envelope.message,
@@ -405,7 +545,14 @@ private struct WireBox: @unchecked Sendable {
     let fallbacks: [String]
 }
 
-/// 通道参数读取（`Int` / `Bool` / `String`；缺失或类型错 → 调用方给定的码，配置类 23、其余 4）。
+/// 目录映射结果跨 Task.detached → 主线程的载体（同 WireBox：值刚构造、之后只读）。
+private struct CatalogBox: @unchecked Sendable {
+    let value: Any
+    let diagnostics: [BridgeDiagnostic]
+    let missingCurrentOfferingIdentifier: String?
+}
+
+/// 通道参数读取（`Int` / `Bool` / `String` / `[String]`；缺失或类型错 → 调用方给定的码，配置类 23、其余 4）。
 /// 对照 RC：purchases-hybrid-common 参数缺失自造 `purchaseInvalidError`；配置类用 23 是我方口径（与 Android 插件同）。
 private struct Arguments {
     private let values: [String: Any]
@@ -448,6 +595,22 @@ private struct Arguments {
             throw BridgeError(code, underlyingMessage: "missing argument \(key)")
         }
         return value
+    }
+
+    /// Dart `List<String>` 经 StandardMessageCodec 解成 `[Any]`（元素 NSString）；非列表 / 含非字符串 → 给定码。
+    func requireStringList(_ key: String, code: SyntheticErrorCode) throws -> [String] {
+        guard let value = raw(key) else {
+            throw BridgeError(code, underlyingMessage: "missing argument \(key)")
+        }
+        guard let list = value as? [Any] else {
+            throw BridgeError(code, underlyingMessage: "argument \(key) must be a List<String>")
+        }
+        return try list.map { element in
+            guard let string = element as? String else {
+                throw BridgeError(code, underlyingMessage: "argument \(key) must be a List<String>")
+            }
+            return string
+        }
     }
 
     func optionalInt(_ key: String, code: SyntheticErrorCode) throws -> Int? {

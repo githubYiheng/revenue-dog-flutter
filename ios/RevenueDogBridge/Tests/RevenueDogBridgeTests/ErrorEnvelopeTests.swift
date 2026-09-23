@@ -24,7 +24,8 @@ final class ErrorEnvelopeTests: XCTestCase {
 
     /// fixture 文件名 → 源错误（样例值照 fixture README「原生测试按样例值构造源错误」）。
     private static let cases: [String: Case] = [
-        "purchase-cancelled-1.json": Case(error: BridgeError(.purchaseCancelledError),
+        // M2：D3 取消用原生码位 1 的 PurchasesError（message 空 → underlyingErrorMessage ""），与 PurchaseResultMapper 同源。
+        "purchase-cancelled-1.json": Case(error: PurchasesError(code: .purchaseCancelledError, message: ""),
                                           path: .purchase, dropsRequestId: false),
         "payment-pending-20.json": Case(error: BridgeError(.paymentPendingError),
                                         path: .purchase, dropsRequestId: false),
@@ -42,6 +43,20 @@ final class ErrorEnvelopeTests: XCTestCase {
                                   message: "missing request_date in subscriber response",
                                   httpStatusCode: 200),
             path: .general, dropsRequestId: true),
+        // M2：getOfferings 全部缺商品（裁定 5），非购买路径无 userCancelled。
+        "store-problem-2.json": Case(
+            error: BridgeError(.storeProblemError, underlyingMessage: OfferingsMapper.storeProductsUnavailable),
+            path: .general, dropsRequestId: false),
+        // M2：purchasePackage 定位失败（B3），消息格式由 PackageLocator 钉死。
+        "product-not-found-5.json": Case(
+            error: BridgeError(.productNotAvailableForPurchaseError,
+                               underlyingMessage: PackageLocator.notFoundMessage(packageIdentifier: "$rc_weekly",
+                                                                                 offeringIdentifier: "default")),
+            path: .purchase, dropsRequestId: false),
+        // M2：码 4 样例值是 Android 的「无 Activity」；iOS 只有「参数缺失」一种来源，见 testMissingArgumentEnvelope。
+        "invalid-argument-4.json": Case(
+            error: BridgeError(.purchaseInvalidError, underlyingMessage: "no current Activity"),
+            path: .purchase, dropsRequestId: false),
         "pending-server-901.json": Case(
             error: PurchasesError(code: .purchasePendingServerConfirmation,
                                   message: "HTTP 503",
@@ -76,6 +91,19 @@ final class ErrorEnvelopeTests: XCTestCase {
             let actual = try envelopeJSON(testCase.error, path: testCase.path)
             if let diff = deepDiff(actual, expected) { XCTFail("\(name): \(diff)") }
         }
+    }
+
+    /// iOS 码 4 的实际来源：purchasePackage 参数缺失（插件 Arguments 的 `missing argument <name>`）。
+    /// 与 fixture 除 underlyingErrorMessage 外逐字相同（fixture README：underlying 取二者之一）。
+    func testMissingArgumentEnvelope() throws {
+        var expected = try XCTUnwrap(Fixtures.json("wire/errors/invalid-argument-4.json") as? [String: Any])
+        var details = try XCTUnwrap(expected["details"] as? [String: Any])
+        details["underlyingErrorMessage"] = "missing argument packageIdentifier"
+        expected["details"] = details
+        let actual = try envelopeJSON(BridgeError(.purchaseInvalidError,
+                                                  underlyingMessage: "missing argument packageIdentifier"),
+                                      path: .purchase)
+        if let diff = deepDiff(actual, expected) { XCTFail(diff) }
     }
 
     /// 14 只在 logOut 路径映射为 22；其它路径保持 14。
