@@ -394,6 +394,10 @@ public class RevenueDogPlugin implements FlutterPlugin, MethodCallHandler, Activ
         if (Boolean.TRUE.equals(duplicate)) {
             NATIVE_DIAGNOSTICS.recordWarning(WARNING_DUPLICATE_CONFIGURE, null);
         }
+        // 同参 configure 走到这里时本引擎多半已订阅（热重启 / 进程内二次 configure），Dart 侧的最近值却已清空
+        // （F8 / F13 实测 2026-09-24：只 return 会让新挂的监听一次都收不到）。关掉旧订阅再订阅一次：
+        // 原生入口订阅即回放最近值（裁定 1），等价于「configure 后主动推一次当前值」（D14），与 iOS 的 force 推同效。
+        closeCustomerInfoSubscription();
         subscribeCustomerInfoIfNeeded();
         result.success(null);
     }
