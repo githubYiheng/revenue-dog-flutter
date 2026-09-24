@@ -3,4 +3,4 @@
 ///
 /// 由 pubspec 生成，脚本 M3 定稿（暂名 `scripts/sdk-flutter-pin.sh`，裁定 4）；
 /// 在此之前手动维护，`test/version_test.dart` 校验与 pubspec `version` 一致。
-const String revenueDogFlutterVersion = '0.1.0-rc.1';
+const String revenueDogFlutterVersion = '0.1.0-rc.2';

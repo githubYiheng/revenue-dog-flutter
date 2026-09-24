@@ -1,7 +1,7 @@
 name: revenue_dog
 description: "RevenueDog Flutter SDK：与 purchases_flutter 同形的 Dart 薄层，桥接 RevenueDog iOS / Android 原生 SDK。"
 # 插件版本的唯一来源；lib/src/version.dart 由它生成（脚本 M3 定稿，设计 §7 版本门禁）。
-version: 0.1.0-rc.1
+version: 0.1.0-rc.2
 publish_to: none
 
 environment:

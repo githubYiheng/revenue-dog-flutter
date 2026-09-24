@@ -5,6 +5,16 @@ tag 一经发布不可移动；首个 tag 由主代理定。`pubspec.yaml` 的 `
 
 ## [Unreleased]
 
+## [0.1.0-rc.2] - 2026-09-24
+
+第二个候选版，只含一处 Android 插件修复；原生仍钉 iOS 0.4.1 / Android 0.2.0，公开 API 面无变化。
+
+### 修复
+
+- Android：已配置后再次同参 `configure`（热重启、进程内二次 configure）时，插件重新订阅原生 CustomerInfo 观察者并回放当前值，
+  新挂的 `addCustomerInfoUpdateListener` 立刻收到一次（D14「configure 后主动推一次」）；此前本引擎已订阅时直接返回，
+  Dart 侧清空后的监听一次都收不到（真机 F8 / F13 实测，`docs/audit/2026-09-24-flutter-device-checklist-run.md`）。iOS 原本就带 force 推，不受影响。
+
 ## [0.1.0-rc.1] - 2026-09-23
 
 **首个候选版（真机 F 系列未跑完前不出 0.1.0）**：内容 = 下列 0.1.0 草稿全部；原生钉 iOS 0.4.1 / Android 0.2.0。
