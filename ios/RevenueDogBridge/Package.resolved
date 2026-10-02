@@ -1,13 +1,13 @@
 {
-  "originHash" : "ec3f6e73be9d79c2e961843c37f9dce92fdc9dd18b6c0329850b871333e1832e",
+  "originHash" : "a55db61455a1797f75f2a224ca2246f402c2aff9ba6ba4103cbe99b6860b0bc8",
   "pins" : [
     {
       "identity" : "revenue-dog-ios",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/githubYiheng/revenue-dog-ios",
       "state" : {
-        "revision" : "e90876433547ea83d15862666cc495256f1f0bea",
-        "version" : "0.4.1"
+        "revision" : "3b6880f96a4e13e98d7a6adef9d1c06ef439479a",
+        "version" : "0.4.2"
       }
     }
   ],

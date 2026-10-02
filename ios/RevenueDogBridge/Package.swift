@@ -20,7 +20,7 @@ let package = Package(
         .library(name: "RevenueDogBridge", targets: ["RevenueDogBridge"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/githubYiheng/revenue-dog-ios", exact: "0.4.1"),
+        .package(url: "https://github.com/githubYiheng/revenue-dog-ios", exact: "0.4.2"),
     ],
     targets: [
         .target(

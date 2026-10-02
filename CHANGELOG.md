@@ -5,6 +5,16 @@ tag 一经发布不可移动；首个 tag 由主代理定。`pubspec.yaml` 的 `
 
 ## [Unreleased]
 
+## [0.1.0-rc.3] - 2026-10-02
+
+第三个候选版：原生钉到 iOS 0.4.2 / Android 0.2.0，插件自身代码与公开 API 面无变化。宿主升级不用改代码。
+
+### 修复
+
+- iOS：扣款成功后误报 `purchasePendingServerConfirmation`（901）。原因在原生 iOS SDK 0.4.1：StoreKit 把刚买的交易先投给
+  `Transaction.updates` 时，`purchase()` 那一路被内存去重判「跳过」，上报还没返回就抛 901（生产 81 笔购买里 6 笔；后端全部 200，
+  钱与权益无损）。原生 0.4.2 已修（ADR 0129），本版只是把钉的版本跟上。Android 不受影响（无此路径）。
+
 ## [0.1.0-rc.2] - 2026-09-24
 
 第二个候选版，只含一处 Android 插件修复；原生仍钉 iOS 0.4.1 / Android 0.2.0，公开 API 面无变化。
