@@ -14,6 +14,7 @@ import org.revdog.flutter.bridge.DiagnosticsSink;
 import org.revdog.flutter.bridge.ErrorEnvelope;
 import org.revdog.flutter.bridge.ErrorMapper;
 import org.revdog.flutter.bridge.Mappers;
+import org.revdog.flutter.bridge.ReservedAttribute;
 import org.revdog.flutter.bridge.WireContractException;
 import org.revdog.purchases.LogHandler;
 import org.revdog.purchases.LogInCallback;
@@ -251,6 +252,9 @@ public class RevenueDogPlugin implements FlutterPlugin, MethodCallHandler, Activ
                 case "checkTrialOrIntroductoryPriceEligibility":
                     checkTrialOrIntroductoryPriceEligibility(call, result);
                     break;
+                case "setReservedAttribute":
+                    setReservedAttribute(call, result);
+                    break;
                 default:
                     result.notImplemented();
             }
@@ -275,6 +279,7 @@ public class RevenueDogPlugin implements FlutterPlugin, MethodCallHandler, Activ
             case "restorePurchases":
             case "syncPurchases":
             case "checkTrialOrIntroductoryPriceEligibility":
+            case "setReservedAttribute":
                 return true;
             default:
                 return false;
@@ -767,6 +772,59 @@ public class RevenueDogPlugin implements FlutterPlugin, MethodCallHandler, Activ
             Log.w(TAG, "main Handler unavailable; delivering inline", e);
             return null;
         }
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // 保留属性（rc.4，设计 §5.8，ADR 0245）
+    // -------------------------------------------------------------------------------------------
+
+    /**
+     * {@code {key, value}} → 同名原生 setter（原生只落本地缓冲、随既有时机同步，调用即返回）；参数错 → 码 4。
+     * 原生 0.2.0 没有的三个（{@code passthrough == false}）校验参数后静默成功、不落数据（同 enableAdServicesAttributionTokenCollection）。
+     */
+    private void setReservedAttribute(MethodCall call, Result result) {
+        ReservedAttribute attribute;
+        Object value;
+        try {
+            attribute = ReservedAttribute.fromKey(optionalString(call, "key", PurchasesErrorCode.PurchaseInvalidError));
+            value = attribute.checkValue(call.argument("value"));
+        } catch (IllegalArgumentException e) {
+            throw new InvalidArgumentException(PurchasesErrorCode.PurchaseInvalidError, e.getMessage());
+        }
+        if (!attribute.passthrough) {
+            // 原生 0.2.0 没有这个 setter：静默成功、不落数据（键表的 passthrough 由 JUnit 对 fixture 钉住）。
+            result.success(null);
+            return;
+        }
+        Purchases purchases = Purchases.getSharedInstance();
+        String string = (String) value; // passthrough 的七个都是 string 行（checkValue 已校验）
+        switch (attribute) {
+            case EMAIL:
+                purchases.setEmail(string);
+                break;
+            case PHONE_NUMBER:
+                purchases.setPhoneNumber(string);
+                break;
+            case ATT_CONSENT_STATUS:
+                purchases.setATTConsentStatus(string);
+                break;
+            case IDFA:
+                purchases.setIDFA(string);
+                break;
+            case IDFV:
+                purchases.setIDFV(string);
+                break;
+            case FB_ANONYMOUS_ID:
+                purchases.setFBAnonymousID(string);
+                break;
+            case FIREBASE_APP_INSTANCE_ID:
+                purchases.setFirebaseAppInstanceID(string);
+                break;
+            default:
+                // 只有键表把一个原生没有 setter 的键标成 passthrough 才会到这里（编码错误，不静默吞掉）。
+                throw new IllegalStateException("no native setter for passthrough attribute " + attribute.key);
+        }
+        result.success(null);
     }
 
     // -------------------------------------------------------------------------------------------

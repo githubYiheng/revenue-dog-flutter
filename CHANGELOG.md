@@ -5,6 +5,56 @@ tag 一经发布不可移动；首个 tag 由主代理定。`pubspec.yaml` 的 `
 
 ## [Unreleased]
 
+## [0.1.0-rc.4] - 2026-11-25
+
+第四个候选版：**新增 10 个订阅者保留属性 setter**（服务端广告转发要读的全部属性）；原生钉到 **iOS 0.5.1** / Android 0.2.0。
+公开 API 只「增」（基线 +10 行，无删改）。不调新方法的宿主升级不用改代码，但 iOS 有下面「iOS 行为变化」里的错误码变化。ADR 0245。
+
+### 新增：保留属性 setter（设计 §5.8）
+
+| 方法 | 属性 | iOS | Android |
+|---|---|---|---|
+| `setEmail(String?)` | `$email` | 透传 | 透传 |
+| `setPhoneNumber(String?)` | `$phoneNumber` | 透传 | 透传 |
+| `setATTConsentStatus(String?)` | `$attConsentStatus` | 透传 | 透传 |
+| `setIDFA(String?)` | `$idfa` | 透传 | 透传 |
+| `setIDFV(String?)` | `$idfv` | 透传 | 透传 |
+| `setFBAnonymousID(String?)` | `$fbAnonId` | 透传 | 透传 |
+| `setFirebaseAppInstanceId(String?)` | `$firebaseAppInstanceId` | 透传 | 透传 |
+| `setTimezone(String?)` | `$timezone` | 透传 | **静默成功、不落数据** |
+| `setAdMeasurementConsent(bool?)` | `$adMeasurementConsent` | 透传 | **静默成功、不落数据** |
+| `setFBCampaignIDs(String?)` | `$fbCampaignIds` | 透传 | **静默成功、不落数据** |
+
+- 语义同原生：只落原生本地缓冲，随原生既有时机同步（回后台、购买上报搭车、logIn 前后），不单独发请求；`null` 或空串 = 删除。
+- 需已 `configure`，否则抛码 23；参数类型不对抛码 4。
+- Android 原生 0.2.0 没有后三个 setter，插件校验参数后直接返回成功（同 `enableAdServicesAttributionTokenCollection`）；原生补上后改为透传。服务端广告转发只收 App Store 事件。
+- 对照 RC `purchases_flutter` 10.13.1：RC 有的 4 个（`setEmail` / `setPhoneNumber` / `setFBAnonymousID` / `setFirebaseAppInstanceId`）名字逐字照 RC，
+  参数由 `String` 放宽为 `String?`（RC 文档写 null 删除、类型却不可空；放宽后 RC 写法照样编译）。其余 6 个是我方扩展，名字同我方 iOS 原生。
+  RC 的 `collectDeviceIdentifiers` 不做：我方 SDK 不自动采 IDFA / IDFV / ATT 状态，由宿主读到后写入。
+- 宿主接线（写哪些、何时写、IANA 时区、沙盒判断）见 README「广告转发（服务端）」。
+
+### iOS 行为变化（原生 0.4.2 → 0.5.1，Android 无变化）
+
+- **购买错误码**（原生 0.5.1，ADR 0243）：StoreKit 抛出的错误一律变成原生 `PurchasesError`，插件照旧原样透传码位。与 rc.3 相比：
+
+  | 原错误 | rc.3 | rc.4 |
+  |---|---|---|
+  | StoreKit 网络错误 | 2 | **10**（`networkError`） |
+  | 商品在当前地区不售 | 2 | **5** |
+  | `StoreKitError.unsupported` | 2 | **4** |
+  | `Product.PurchaseError.productUnavailable` | 0 | **5** |
+  | `InvalidRequestError`（iOS 18.4+，如 code 1002）、`Product.PurchaseError` 其余 case | 0 | **2** |
+  | 其它 StoreKit 错误 / 非 StoreKit 错误 | 2 / 0 | 2 / 0（不变） |
+
+  取消（码 1）、待批准（20）、901 / 902 不变。码 3（设备不允许购买）的 `message` 由中文改为英文。`details.underlyingErrorMessage` 现在是「原生英文说明 | Apple 原文」。
+  按码位分支的宿主：10 / 5 两个分支开始生效；直接显示 `message` 的宿主，文案仍是英文短句，要本地化请按码位自己出。
+- **订阅周期归一化**（原生 0.4.3，ADR 0135，与 RC 相同）：StoreKit 报「7 天」「12 个月」时，`StoreProduct.subscriptionPeriod` 与试用期给 `P1W` / `P1Y`（rc.3 给 `P7D` / `P12M`）。按 `P1W` 匹配周卡的付费墙从此稳定命中。
+- **拉商品重试与进程内缓存**（原生 0.4.4，ADR 0155）：StoreKit 拉商品抛错时最多再试 2 次（退避 1 s、2 s），付费墙偶发全空的情况消失；这种情况下 `getOfferings` 最多多等约 3 秒。
+
+### 依赖
+
+- 原生钉 iOS `revenue-dog-ios` **0.5.1**（`exact:`）/ Android `org.revdog:purchases:`**0.2.0**（不变）。
+
 ## [0.1.0-rc.3] - 2026-10-02
 
 第三个候选版：原生钉到 iOS 0.4.2 / Android 0.2.0，插件自身代码与公开 API 面无变化。宿主升级不用改代码。

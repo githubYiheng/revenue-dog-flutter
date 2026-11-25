@@ -311,6 +311,63 @@ class Purchases {
     await _invoke(ChannelMethods.enableAdServicesAttributionTokenCollection);
   }
 
+  // ---------------------------------------------------------------------------
+  // 订阅者保留属性（rc.4，设计 §5.8，ADR 0245）
+  //
+  // 范围 = 服务端广告转发（Meta / TikTok / GA4）读取的全部保留属性。每个 setter 透传到原生同名 setter：
+  // 只落原生本地缓冲，随原生既有时机同步（回后台、购买上报搭车、logIn 前后），不单独发请求。
+  // `null` 或空串 = 删除该属性（两端原生同一口径）。需已 configure，否则抛码 23。
+  // Android：原生 0.2.0 有的 7 个照样透传；没有的 3 个（setTimezone / setAdMeasurementConsent /
+  // setFBCampaignIDs）静默成功、不落任何数据，原生补上后改为透传。服务端广告转发只收 App Store 事件。
+  //
+  // 对照 RC purchases_flutter 10.13.1：RC 有的 4 个（setEmail / setPhoneNumber / setFBAnonymousID /
+  // setFirebaseAppInstanceId）名字逐字照 RC，参数放宽为可空（RC 文档写 null 删除、类型却不可空；放宽对 RC 写法源码兼容）；
+  // 其余 6 个是我方扩展，名字同我方 iOS 原生（RC 用 collectDeviceIdentifiers 自动采 IDFA / IDFV、自动写 ATT 状态，我方不自动采）。
+  // ---------------------------------------------------------------------------
+
+  static Future<void> _setReservedAttribute(String key, Object? value) async {
+    await _invoke(ChannelMethods.setReservedAttribute, {'key': key, 'value': value});
+  }
+
+  /// `$email`。`null` / 空串 = 删除。服务端给 Meta / TikTok 发时做 SHA-256。
+  static Future<void> setEmail(String? email) => _setReservedAttribute(r'$email', email);
+
+  /// `$phoneNumber`。`null` / 空串 = 删除。服务端给 Meta / TikTok 发时做 SHA-256。
+  static Future<void> setPhoneNumber(String? phoneNumber) =>
+      _setReservedAttribute(r'$phoneNumber', phoneNumber);
+
+  /// `$attConsentStatus`：ATT 授权状态，写 `authorized` / `denied` / `restricted` / `notDetermined`。
+  /// 服务端只把 `authorized` 当作已授权。与 [setIDFA] 总在同一处紧挨着写；启动时与每次回前台都重读再写。
+  static Future<void> setATTConsentStatus(String? attConsentStatus) =>
+      _setReservedAttribute(r'$attConsentStatus', attConsentStatus);
+
+  /// `$idfa`。ATT 未授权或已撤销时传 `null`（删除）。与 [setATTConsentStatus] 同一时机写。
+  static Future<void> setIDFA(String? idfa) => _setReservedAttribute(r'$idfa', idfa);
+
+  /// `$idfv`。
+  static Future<void> setIDFV(String? idfv) => _setReservedAttribute(r'$idfv', idfv);
+
+  /// `$fbAnonId`：Facebook SDK 的匿名 ID。名字与签名照 RC（参数放宽为可空）。
+  static Future<void> setFBAnonymousID(String? fbAnonymousID) =>
+      _setReservedAttribute(r'$fbAnonId', fbAnonymousID);
+
+  /// `$firebaseAppInstanceId`：Firebase Analytics 的 app instance id（GA4 转发用）。名字与签名照 RC（参数放宽为可空）。
+  static Future<void> setFirebaseAppInstanceId(String? firebaseAppInstanceId) =>
+      _setReservedAttribute(r'$firebaseAppInstanceId', firebaseAppInstanceId);
+
+  /// `$timezone`：**IANA 时区标识**（如 `Asia/Shanghai`），原样写入。
+  /// 不要传 Dart 的 `DateTime.timeZoneName`（那是缩写，如 `CST`）。Android 静默成功、不落数据。
+  static Future<void> setTimezone(String? timezone) => _setReservedAttribute(r'$timezone', timezone);
+
+  /// `$adMeasurementConsent`：App 内「分享使用 / 广告衡量数据」开关的当前值。
+  /// 原生只写 `"true"` / `"false"`；`null` = 删除。服务端只把 `true` 当作同意。Android 静默成功、不落数据。
+  static Future<void> setAdMeasurementConsent(bool? granted) =>
+      _setReservedAttribute(r'$adMeasurementConsent', granted);
+
+  /// `$fbCampaignIds`：Facebook 回流深链里 `campaign_ids` 的原串，原样写入。Android 静默成功、不落数据。
+  static Future<void> setFBCampaignIDs(String? fbCampaignIDs) =>
+      _setReservedAttribute(r'$fbCampaignIds', fbCampaignIDs);
+
   static T _expect<T>(Object? value, String wireKey) {
     if (value is! T) throwWireError(wireKey, 'expected $T, got ${value.runtimeType}');
     return value;

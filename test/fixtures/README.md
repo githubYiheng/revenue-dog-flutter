@@ -62,6 +62,7 @@
 | `offerings-current-dropped-ios.json` / `-android.json`（M2） | `backend/offerings-current-dropped.json` 的期望输出：`all` 只剩 `default`，`current: null` |
 | `intro-eligibility-ios.json` / `-android.json`（M2） | §5.5，请求 `productIdentifiers: ["premium_monthly", "premium_annual", "unknown_product"]` 的期望输出，见下「IntroEligibility」 |
 | `errors/*.json` | §5.6 错误信封 `{code: "<十进制>", message, details}` |
+| `reserved-attributes.json`（rc.4） | §5.8 保留属性 setter 表：`method`（通道方法名）+ `attributes[]` 每行 `{dart: 门面方法名, key: 原生保留键, value: string\|bool, android: passthrough\|noop}`。Dart 测试断言门面逐行发 `{key, value}`；iOS Bridge `ReservedAttribute.allCases`、Android Bridge `ReservedAttribute.values()` 的键 / 值类型 / Android 行为与本表逐行相等（顺序也比） |
 
 ### 错误信封（`errors/`）
 

@@ -45,6 +45,8 @@ public final class RevenueDogPlugin: NSObject {
         // M2：目录与购买（设计 §1 #12–#24、§3）。
         "getOfferings", "purchasePackage", "restorePurchases", "syncPurchases",
         "checkTrialOrIntroductoryPriceEligibility",
+        // rc.4：保留属性 setter（设计 §5.8，ADR 0245）。
+        "setReservedAttribute",
     ]
 
     /// 购买路径的方法：同步阶段抛出的错误（参数缺失等）也按购买路径装信封（带 userCancelled: false，D3）。
@@ -148,6 +150,8 @@ extension RevenueDogPlugin: @preconcurrency FlutterPlugin {
                 syncPurchases(result: result)
             case "checkTrialOrIntroductoryPriceEligibility":
                 try checkTrialOrIntroductoryPriceEligibility(arguments, result: result)
+            case "setReservedAttribute":
+                try setReservedAttribute(arguments, result: result)
             default:
                 result(FlutterMethodNotImplemented)
             }
@@ -482,6 +486,32 @@ extension RevenueDogPlugin {
     }
 }
 
+// MARK: - 保留属性（rc.4，设计 §5.8，ADR 0245）
+
+extension RevenueDogPlugin {
+
+    /// `{key, value}` → 同名原生 setter。原生只落本地缓冲、随既有时机同步，调用即返回；参数错 → 码 4。
+    private func setReservedAttribute(_ arguments: Arguments, result: @escaping FlutterResult) throws {
+        let write = try ReservedAttributeWrite.parse(
+            key: try arguments.optionalString("key", code: .purchaseInvalidError),
+            value: arguments.value("value"))
+        let purchases = Purchases.shared
+        switch write {
+        case .email(let value): purchases.setEmail(value)
+        case .phoneNumber(let value): purchases.setPhoneNumber(value)
+        case .attConsentStatus(let value): purchases.setATTConsentStatus(value)
+        case .idfa(let value): purchases.setIDFA(value)
+        case .idfv(let value): purchases.setIDFV(value)
+        case .fbAnonymousID(let value): purchases.setFBAnonymousID(value)
+        case .firebaseAppInstanceID(let value): purchases.setFirebaseAppInstanceID(value)
+        case .timezone(let value): purchases.setTimezone(value)
+        case .adMeasurementConsent(let value): purchases.setAdMeasurementConsent(value)
+        case .fbCampaignIDs(let value): purchases.setFBCampaignIDs(value)
+        }
+        result(nil)
+    }
+}
+
 // MARK: - 订阅（D14）
 
 extension RevenueDogPlugin {
@@ -611,6 +641,11 @@ private struct Arguments {
             }
             return string
         }
+    }
+
+    /// 原始参数值（`NSNull` 视为缺失）；类型校验交给调用方（`ReservedAttributeWrite.parse`）。
+    func value(_ key: String) -> Any? {
+        raw(key)
     }
 
     func optionalInt(_ key: String, code: SyntheticErrorCode) throws -> Int? {

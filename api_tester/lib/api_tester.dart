@@ -7,7 +7,7 @@
 // - 枚举一律**穷尽 switch、不写 default**：增删值都会让这里失败，逼着同步更新本文件与公开符号基线。
 // 与 RC purchases_flutter 的 api_tester 同形：公开面「只进不出」，删 / 改 = 主版本（CHANGELOG 顶部规则）。
 //
-// 覆盖：Purchases 32 项（设计 §1）+ isAnonymous / setLogHandler + 全部模型构造与 getter + 16 个枚举穷尽 switch
+// 覆盖：Purchases 32 项（设计 §1）+ isAnonymous / setLogHandler + rc.4 十个保留属性 setter + 全部模型构造与 getter + 16 个枚举穷尽 switch
 // + PurchasesErrorHelper.getErrorCode + UnsupportedPlatformException + 两个 typedef + 5 个扩展。
 // 符号清单另见 `api-baseline/public-api.txt`（`scripts/api_symbols.dart --check` 比对）。
 // ignore_for_file: unused_element
@@ -41,6 +41,32 @@ Future<void> _checkPurchases(Package package, PurchasesConfiguration configurati
 
   // #9
   await Purchases.enableAdServicesAttributionTokenCollection();
+
+  // rc.4 保留属性 setter（设计 §5.8）：每个按「有值」与「null = 删除」各调一遍；RC 写法（传非空 String）也要编过。
+  final Future<void> setEmailFuture = Purchases.setEmail('a@example.com');
+  await setEmailFuture;
+  await Purchases.setEmail(null);
+  await Purchases.setPhoneNumber('+15555550100');
+  await Purchases.setPhoneNumber(null);
+  await Purchases.setATTConsentStatus('authorized');
+  await Purchases.setATTConsentStatus(null);
+  await Purchases.setIDFA('00000000-0000-0000-0000-000000000000');
+  await Purchases.setIDFA(null);
+  await Purchases.setIDFV('00000000-0000-0000-0000-000000000000');
+  await Purchases.setIDFV(null);
+  await Purchases.setFBAnonymousID('XZ0000');
+  await Purchases.setFBAnonymousID(null);
+  await Purchases.setFirebaseAppInstanceId('0123456789abcdef0123456789abcdef');
+  await Purchases.setFirebaseAppInstanceId(null);
+  await Purchases.setTimezone('America/New_York');
+  await Purchases.setTimezone(null);
+  await Purchases.setAdMeasurementConsent(true);
+  await Purchases.setAdMeasurementConsent(null);
+  await Purchases.setFBCampaignIDs('120200000000000000');
+  await Purchases.setFBCampaignIDs(null);
+  // RC 签名的函数类型（`Future<void> Function(String)`）仍可接住放宽后的 setter。
+  final Future<void> Function(String) rcShapedSetter = Purchases.setFirebaseAppInstanceId;
+  await rcShapedSetter('id');
 
   // #10 / #11
   final CustomerInfo customerInfo = await Purchases.getCustomerInfo();

@@ -3,8 +3,8 @@
 与 RevenueCat `purchases_flutter`（10.13.1）**同形**的 Dart 薄层，直接桥接 RevenueDog iOS / Android 原生 SDK。
 Flutter 层不含任何支付逻辑：身份、缓存、上报、补报全在原生。设计：`docs/plan/flutter-sdk-design.md`（ADR 0100）。
 
-> 当前状态：**M1 / M2 已落地（Dart + 双端插件，32 项公开面齐）；M3 工程面已落地**（测试 app、`api_tester` 公开面基线、门禁 / 钉版本 / 发布脚本、真机清单草案）。
-> 首个 tag 之前还差真机清单 F 系列（`docs/audit/2026-09-24-flutter-device-checklist.md`）；**在此之前不要在宿主里接入**。
+> 当前状态：候选版 **0.1.0-rc.4**（原生钉 iOS 0.5.1 / Android 0.2.0）。候选版已在生产宿主中使用；
+> 真机清单 F 系列（`docs/audit/2026-09-24-flutter-device-checklist.md`）跑完再出 0.1.0。各版变化见 `CHANGELOG.md`。
 
 ## 安装
 
@@ -52,6 +52,7 @@ Purchases.addCustomerInfoUpdateListener((info) { /* ... */ });
 |---|---|---|
 | M1 | `configure`、`setLogLevel`、`setLogHandler`、`isConfigured`、`logIn`、`logOut`、`appUserID`、`isAnonymous`、`getCustomerInfo`、`add/removeCustomerInfoUpdateListener`、`enableAdServicesAttributionTokenCollection` | `PurchasesConfiguration`、`CustomerInfo`、`EntitlementInfos` / `EntitlementInfo`、`SubscriptionInfo`、`StoreTransaction`、`LogInResult`、`PurchasesErrorCode` / `PurchasesErrorHelper` 等 |
 | M2 | `getOfferings`、`purchase(PurchaseParams)`、`purchasePackage(Package)`（`@Deprecated`）、`restorePurchases`、`syncPurchases`、`checkTrialOrIntroductoryPriceEligibility` | `Offerings`、`Offering`、`Package` / `PackageType`、`PresentedOfferingContext`、`StoreProduct`（19 字段）、`IntroductoryPrice`、`PeriodUnit`、`ProductCategory`、`SubscriptionOption` / `PricingPhase` / `Price` / `Period` / `RecurrenceMode` / `OfferPaymentMode` / `InstallmentsInfo`（Android only）、`StoreProductDiscount`（只声明）、`PurchaseParams`（只有 `.package`）、`PurchaseResult`、`IntroEligibility` / `IntroEligibilityStatus` |
+| rc.4 | 保留属性 setter（见下「广告转发（服务端）」）：`setEmail`、`setPhoneNumber`、`setATTConsentStatus`、`setIDFA`、`setIDFV`、`setFBAnonymousID`、`setFirebaseAppInstanceId`、`setTimezone`、`setAdMeasurementConsent`、`setFBCampaignIDs` | — |
 
 ```dart
 final offerings = await Purchases.getOfferings();
@@ -64,6 +65,41 @@ if (package != null) {
   }
 }
 ```
+
+## 广告转发（服务端）
+
+项目在后台开了 Meta / TikTok / GA4 转发后，服务端把 **App Store** 的购买事件发给广告平台，发送时读该客户**最后一次同步**的订阅者属性。
+setter 只落原生本地缓冲，随原生既有时机同步（回后台、购买上报搭车、logIn 前后）；值没变不会多发请求。`null` 或空串 = 删除。
+全部要在 `configure` 之后调（之前调抛码 23）。
+
+| setter | 属性 | 写什么、何时写 |
+|---|---|---|
+| `setATTConsentStatus` + `setIDFA` | `$attConsentStatus` / `$idfa` | **两个总在同一处紧挨着写**。启动时与每次回前台都重读 ATT 状态再写（用户可能在系统设置里撤销）。状态写 `authorized` / `denied` / `restricted` / `notDetermined`，服务端只把 `authorized` 当作已授权；未授权或已撤销时 `setIDFA(null)` |
+| `setIDFV` | `$idfv` | 与上一行同一时机 |
+| `setFBAnonymousID` | `$fbAnonId` | Facebook SDK 的匿名 ID，与上一行同一时机 |
+| `setFirebaseAppInstanceId` | `$firebaseAppInstanceId` | Firebase Analytics 的 app instance id（GA4 转发用），与上一行同一时机 |
+| `setTimezone` | `$timezone` | **IANA 标识**（如 `America/New_York`）。Dart 的 `DateTime.timeZoneName` 是缩写（`CST`），不能用，要从系统读 IANA 标识 |
+| `setAdMeasurementConsent` | `$adMeasurementConsent` | App 内「分享使用 / 广告衡量数据」开关的当前值，启动时与开关变化时写；服务端只把 `true` 当作同意 |
+| `setFBCampaignIDs` | `$fbCampaignIds` | 处理 Facebook 回流深链时，链接里 `campaign_ids` 的原串；服务端只给写入后 7 天内的事件带上 |
+| `setEmail` / `setPhoneNumber` | `$email` / `$phoneNumber` | 有才写；服务端给 Meta / TikTok 发时做 SHA-256 |
+
+**Android**：前 7 个照样透传到原生；`setTimezone` / `setAdMeasurementConsent` / `setFBCampaignIDs` 原生 0.2.0 没有，插件静默成功、不落数据。服务端也不转发 Google Play 事件，宿主不必判平台。
+
+**沙盒 / TestFlight 的购买不要发给广告平台。** 判断「这笔购买」的环境，读这笔商品自己的订阅记录，取不到按沙盒、不发：
+
+```dart
+final result = await Purchases.purchase(PurchaseParams.package(package));
+final isSandbox = result.customerInfo
+        .subscriptionsByProductIdentifier[result.storeTransaction.productIdentifier]
+        ?.isSandbox ??
+    true;
+```
+
+`PurchaseResult.customerInfo` 是服务端确认这笔交易之后返回的，刚买的这笔订阅已在里面；`isSandbox` 由服务端按 Apple 签名交易的环境给出，插件原样带上。
+不要读 `entitlements.all['pro']?.isSandbox`：它描述的是**当前授予该权益的商品**，不一定是这笔购买。一次性商品在 Flutter 层读不到环境（RC 模型的 `StoreTransaction` 没有这个字段），按上面的写法会落到「按沙盒、不发」。
+
+App 自己用 Facebook SDK 记购买事件时的 `event_id`、关闭 Facebook SDK 自动内购记录、`external_id` 高级匹配、隐私披露里写「IP 地址」，与原生 iOS 宿主相同，
+见 iOS SDK README「Meta Conversions API 转发（服务端）」（`github.com/githubYiheng/revenue-dog-ios`）。`transactionId` 取 `result.storeTransaction.transactionIdentifier`。
 
 ## 错误处理
 
@@ -105,7 +141,8 @@ RC 的原写法全部有效（`code == '1'`、`details['userCancelled']`、`deta
 | `StoreProduct.presentedOfferingContext` | iOS 不填 | 两端都填 | §5.4 |
 | 价格折算 / 促销 / Web | `pricePerWeek/Month/Year(+String)`、`discounts`、`webCheckoutUrl`、`Offering.metadata` 有值 | 字段都声明，值恒为 `null` / `{}` | §5.3 / §5.4 |
 | `PurchaseParams` | `.package` / `.storeProduct` / `.subscriptionOption` + 升降级、个性化价格、促销 / win-back、email 参数 | 只有 `PurchaseParams.package(package)`；`purchasePackage` 不带 RC 的升降级命名参数（D5） | §1 #21–22 |
-| 未提供 | 付费墙、Web、广告、优惠签名、旧购买 API、订阅者属性等 | 不做（设计 §2「不建」） | ADR 0100 |
+| 订阅者属性 | `setAttributes` 与全套三方 ID setter、`collectDeviceIdentifiers`（自动采 IDFA / IDFV）；参数类型为 `String` | 只有广告转发读的 10 个（rc.4）；参数为 `String?`（RC 写法照样编译）；不自动采任何标识 | §5.8 / ADR 0245 |
+| 未提供 | 付费墙、Web、广告、优惠签名、旧购买 API 等 | 不做（设计 §2「不建」） | ADR 0100 |
 
 ## 开发 / 门禁 / 发布
 

@@ -1,0 +1,15 @@
+{
+  "method": "setReservedAttribute",
+  "attributes": [
+    { "dart": "setEmail", "key": "$email", "value": "string", "android": "passthrough" },
+    { "dart": "setPhoneNumber", "key": "$phoneNumber", "value": "string", "android": "passthrough" },
+    { "dart": "setATTConsentStatus", "key": "$attConsentStatus", "value": "string", "android": "passthrough" },
+    { "dart": "setIDFA", "key": "$idfa", "value": "string", "android": "passthrough" },
+    { "dart": "setIDFV", "key": "$idfv", "value": "string", "android": "passthrough" },
+    { "dart": "setFBAnonymousID", "key": "$fbAnonId", "value": "string", "android": "passthrough" },
+    { "dart": "setFirebaseAppInstanceId", "key": "$firebaseAppInstanceId", "value": "string", "android": "passthrough" },
+    { "dart": "setTimezone", "key": "$timezone", "value": "string", "android": "noop" },
+    { "dart": "setAdMeasurementConsent", "key": "$adMeasurementConsent", "value": "bool", "android": "noop" },
+    { "dart": "setFBCampaignIDs", "key": "$fbCampaignIds", "value": "string", "android": "noop" }
+  ]
+}

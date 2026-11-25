@@ -186,8 +186,18 @@ class Purchases
   Purchases.purchasePackage [static method] Future<PurchaseResult> purchasePackage(Package packageToPurchase) @Deprecated
   Purchases.removeCustomerInfoUpdateListener [static method] void removeCustomerInfoUpdateListener(void Function(CustomerInfo) listenerToRemove)
   Purchases.restorePurchases [static method] Future<CustomerInfo> restorePurchases()
+  Purchases.setATTConsentStatus [static method] Future<void> setATTConsentStatus(String? attConsentStatus)
+  Purchases.setAdMeasurementConsent [static method] Future<void> setAdMeasurementConsent(bool? granted)
+  Purchases.setEmail [static method] Future<void> setEmail(String? email)
+  Purchases.setFBAnonymousID [static method] Future<void> setFBAnonymousID(String? fbAnonymousID)
+  Purchases.setFBCampaignIDs [static method] Future<void> setFBCampaignIDs(String? fbCampaignIDs)
+  Purchases.setFirebaseAppInstanceId [static method] Future<void> setFirebaseAppInstanceId(String? firebaseAppInstanceId)
+  Purchases.setIDFA [static method] Future<void> setIDFA(String? idfa)
+  Purchases.setIDFV [static method] Future<void> setIDFV(String? idfv)
   Purchases.setLogHandler [static method] Future<void> setLogHandler(void Function(LogLevel, String) logHandler)
   Purchases.setLogLevel [static method] Future<void> setLogLevel(LogLevel level)
+  Purchases.setPhoneNumber [static method] Future<void> setPhoneNumber(String? phoneNumber)
+  Purchases.setTimezone [static method] Future<void> setTimezone(String? timezone)
   Purchases.syncPurchases [static method] Future<void> syncPurchases()
 abstract class PurchasesAreCompletedBy
   PurchasesAreCompletedBy.new [constructor] PurchasesAreCompletedBy()

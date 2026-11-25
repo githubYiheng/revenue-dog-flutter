@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/githubYiheng/revenue-dog-ios",
       "state" : {
-        "revision" : "3b6880f96a4e13e98d7a6adef9d1c06ef439479a",
-        "version" : "0.4.2"
+        "revision" : "dd6b750cc14f3280c225ea0a9032c1c8a713aa0d",
+        "version" : "0.5.1"
       }
     }
   ],

@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 /// 双向复用：Dart → 原生 `invokeMethod`，原生 → Dart 反向 `invokeMethod`（事件）。不用 Pigeon。
 const MethodChannel revenueDogMethodChannel = MethodChannel('revenue_dog');
 
-/// Dart → 原生方法名（设计 §5 方法表，M1 + M2 共 17 个）。名字即契约，原生插件逐字匹配。
+/// Dart → 原生方法名（设计 §5 方法表，M1 + M2 共 17 个，rc.4 加 1 个）。名字即契约，原生插件逐字匹配。
 abstract final class ChannelMethods {
   static const setupPurchases = 'setupPurchases';
   static const getConfiguredParams = 'getConfiguredParams';
@@ -37,6 +37,11 @@ abstract final class ChannelMethods {
 
   /// `{productIdentifiers: List<String>}` → `{productId: {status, description}}`（§5.5）。
   static const checkTrialOrIntroductoryPriceEligibility = 'checkTrialOrIntroductoryPriceEligibility';
+
+  // rc.4：保留属性 setter（设计 §5.8，ADR 0245）。
+  /// `{key: <原生保留键，如 $idfa>, value: String? | bool?}` → null。十个门面 setter 共用这一条；
+  /// 键表 = `test/fixtures/wire/reserved-attributes.json`（三方对账），原生按键分派到同名原生 setter。
+  static const setReservedAttribute = 'setReservedAttribute';
 }
 
 /// 原生 → Dart 事件名（设计 §5.7）。对照 RC：事件名逐字沿用。
